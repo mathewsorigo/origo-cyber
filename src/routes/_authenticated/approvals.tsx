@@ -105,7 +105,7 @@ function ApprovalsPage() {
                   <li key={a.id} className="rounded-md border border-high/40 bg-high/5 p-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-mono text-xs text-primary">
-                        {actionTypeLabel(a.action_type)}
+                        {actionTypeLabel[a.action_type] ?? a.action_type}
                       </span>
                       {severity && <SeverityBadge severity={severity} />}
                       <span className="ml-auto font-mono text-[10px] text-muted-foreground">
@@ -175,7 +175,7 @@ function ApprovalsPage() {
               {history.map((a) => (
                 <li key={a.id} className="border-b border-border pb-3 last:border-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-xs">{actionTypeLabel(a.action_type)}</span>
+                    <span className="font-mono text-xs">{actionTypeLabel[a.action_type] ?? a.action_type}</span>
                     <StatusPill
                       label={actionStatusLabel[a.status as ActionStatus]}
                       tone={

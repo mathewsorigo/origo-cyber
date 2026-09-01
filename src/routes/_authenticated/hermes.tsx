@@ -90,7 +90,15 @@ function HermesPage() {
   }, [queryClient]);
 
   const savePolicy = useMutation({
-    mutationFn: async (patch: Record<string, unknown>) => {
+    mutationFn: async (patch: Partial<{
+      mode: string;
+      min_severity_to_act: Severity;
+      auto_approved_actions: string[];
+      scan_schedule: string;
+      maintenance_window: string | null;
+      paused: boolean;
+      notes: string | null;
+    }>) => {
       if (!data?.policy) throw new Error("Política não encontrada.");
       const { error } = await supabase
         .from("hermes_policies")

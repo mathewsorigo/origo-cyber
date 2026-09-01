@@ -40,8 +40,8 @@ function AssetsPage() {
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [identifier, setIdentifier] = useState("");
-  const [kind, setKind] = useState<string>("host");
-  const [criticality, setCriticality] = useState<string>("medium");
+  const [kind, setKind] = useState<(typeof kinds)[number]>("host");
+  const [criticality, setCriticality] = useState<Severity>("medium");
   const [owner, setOwner] = useState("");
 
   const { data = [], isLoading } = useQuery({
@@ -105,7 +105,7 @@ function AssetsPage() {
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
               />
-              <Select value={kind} onValueChange={setKind}>
+              <Select value={kind} onValueChange={(v) => setKind(v as (typeof kinds)[number])}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -117,7 +117,7 @@ function AssetsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={criticality} onValueChange={setCriticality}>
+              <Select value={criticality} onValueChange={(v) => setCriticality(v as Severity)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -161,7 +161,7 @@ function AssetsPage() {
                   <li key={a.id} className="rounded-md border border-border p-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-medium">{a.name}</span>
-                      <StatusPill label={assetKindLabel[a.kind as keyof typeof assetKindLabel]} />
+                      <StatusPill label={assetKindLabel[a.kind] ?? a.kind} />
                       <span className="font-mono text-[10px] uppercase text-muted-foreground">
                         crit. {a.criticality}
                       </span>

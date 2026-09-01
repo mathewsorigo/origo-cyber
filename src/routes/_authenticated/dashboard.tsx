@@ -94,6 +94,8 @@ function Dashboard() {
     severity: sev,
     count: open.filter((v) => v.severity === sev).length,
   }));
+  const criticalCount = bySeverity.find((r) => r.severity === "critical")?.count ?? 0;
+  const highCount = bySeverity.find((r) => r.severity === "high")?.count ?? 0;
   const overdue = open.filter((v) => v.due_at && new Date(v.due_at).getTime() < Date.now());
   const openIncidents = data.incidents.filter((i) => i.phase !== "closed");
   const pending = data.actions.filter((a) => a.status === "pending_approval");
@@ -126,8 +128,8 @@ function Dashboard() {
         <StatCard
           label="Vulnerabilidades abertas"
           value={open.length}
-          hint={`${bySeverity[0].count} críticas · ${bySeverity[1].count} altas`}
-          tone={bySeverity[0].count > 0 ? "critical" : "default"}
+          hint={`${criticalCount} críticas · ${highCount} altas`}
+          tone={criticalCount > 0 ? "critical" : "default"}
         />
         <StatCard
           label="SLA estourado"
