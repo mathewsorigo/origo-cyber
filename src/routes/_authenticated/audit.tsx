@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { EmptyState, PageHeader, Panel } from "@/components/common";
 import { formatDateTime } from "@/lib/domain";
 import { Input } from "@/components/ui/input";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 
 export const Route = createFileRoute("/_authenticated/audit")({
   head: () => ({
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/_authenticated/audit")({
 });
 
 function AuditPage() {
+  useRealtimeSync("audit-live", ["audit_log"], [["audit"]]);
   const [q, setQ] = useState("");
 
   const { data = [], isLoading } = useQuery({

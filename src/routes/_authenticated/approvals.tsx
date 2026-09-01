@@ -15,6 +15,7 @@ import {
 } from "@/lib/domain";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 
 export const Route = createFileRoute("/_authenticated/approvals")({
   head: () => ({
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/_authenticated/approvals")({
 });
 
 function ApprovalsPage() {
+  useRealtimeSync("approvals-live", ["response_actions", "incidents", "vulnerabilities"], [["response-actions"], ["pending-actions-count"]]);
   const { isAdmin, user } = useAuth();
   const queryClient = useQueryClient();
   const [notes, setNotes] = useState<Record<string, string>>({});

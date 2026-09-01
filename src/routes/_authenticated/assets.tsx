@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
   Select,
   SelectContent,
   SelectItem,
@@ -36,6 +37,7 @@ export const Route = createFileRoute("/_authenticated/assets")({
 });
 
 function AssetsPage() {
+  useRealtimeSync("assets-live", ["assets", "vulnerabilities"], [["assets"], ["assets-min"]]);
   const { isAdmin, user } = useAuth();
   const queryClient = useQueryClient();
   const [name, setName] = useState("");

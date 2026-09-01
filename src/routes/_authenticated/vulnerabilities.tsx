@@ -15,6 +15,7 @@ import {
 } from "@/lib/domain";
 import { Input } from "@/components/ui/input";
 import {
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
   Select,
   SelectContent,
   SelectItem,
@@ -48,6 +49,7 @@ export const Route = createFileRoute("/_authenticated/vulnerabilities")({
 });
 
 function VulnerabilitiesPage() {
+  useRealtimeSync("vulns-live", ["vulnerabilities", "assets", "response_actions"], [["vulnerabilities"]]);
   const { canTriage } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");

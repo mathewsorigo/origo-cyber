@@ -13,6 +13,7 @@ import {
   type Severity,
 } from "@/lib/domain";
 import {
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
   Select,
   SelectContent,
   SelectItem,
@@ -38,6 +39,7 @@ export const Route = createFileRoute("/_authenticated/incidents")({
 });
 
 function IncidentsPage() {
+  useRealtimeSync("incidents-live", ["incidents", "response_actions"], [["incidents"]]);
   const { canTriage } = useAuth();
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<string | null>(null);
