@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { EmptyState, PageHeader, Panel, StatusPill } from "@/components/common";
 import { formatDateTime } from "@/lib/domain";
 import { Button } from "@/components/ui/button";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 
 const roles = ["admin", "analyst", "viewer"] as const;
 type AppRole = (typeof roles)[number];
@@ -38,6 +39,7 @@ export const Route = createFileRoute("/_authenticated/users")({
 });
 
 function UsersPage() {
+  useRealtimeSync("users-live", ["user_roles", "profiles"], [["users-roles"], ["roles"]]);
   const { isAdmin, user } = useAuth();
   const queryClient = useQueryClient();
 

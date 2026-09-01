@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 
 const statuses: VulnStatus[] = [
   "new",
@@ -48,6 +49,7 @@ export const Route = createFileRoute("/_authenticated/vulnerabilities")({
 });
 
 function VulnerabilitiesPage() {
+  useRealtimeSync("vulns-live", ["vulnerabilities", "assets", "response_actions"], [["vulnerabilities"]]);
   const { canTriage } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");

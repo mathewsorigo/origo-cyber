@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 
 export const Route = createFileRoute("/_authenticated/hermes")({
   head: () => ({
@@ -78,17 +79,7 @@ function HermesPage() {
     },
   });
 
-  useEffect(() => {
-    const channel = supabase
-      .channel("hermes-control-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "agent_status" }, () =>
-        queryClient.invalidateQueries({ queryKey: ["hermes-control"] }),
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
+  useRealtimeSync("hermes-live", ["agent_status", "hermes_policies", "hermes_commands"], [["hermes-control"], ["agent-status"]]);
 
   const savePolicy = useMutation({
     mutationFn: async (patch: Partial<{

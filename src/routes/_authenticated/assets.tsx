@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 
 const kinds = ["host", "domain", "repository", "cloud", "endpoint", "database", "saas"] as const;
 const criticalities = ["critical", "high", "medium", "low"] as const;
@@ -36,6 +37,7 @@ export const Route = createFileRoute("/_authenticated/assets")({
 });
 
 function AssetsPage() {
+  useRealtimeSync("assets-live", ["assets", "vulnerabilities"], [["assets"], ["assets-min"]]);
   const { isAdmin, user } = useAuth();
   const queryClient = useQueryClient();
   const [name, setName] = useState("");

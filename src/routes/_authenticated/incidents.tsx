@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 
 const phases: IncidentPhase[] = ["open", "contained", "eradicated", "recovered", "closed"];
 
@@ -38,6 +39,7 @@ export const Route = createFileRoute("/_authenticated/incidents")({
 });
 
 function IncidentsPage() {
+  useRealtimeSync("incidents-live", ["incidents", "response_actions"], [["incidents"]]);
   const { canTriage } = useAuth();
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<string | null>(null);

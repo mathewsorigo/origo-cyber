@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 
 export const Route = createFileRoute("/_authenticated/scans")({
   head: () => ({
@@ -41,6 +42,7 @@ const profiles = [
 ];
 
 function ScansPage() {
+  useRealtimeSync("scans-live", ["scans", "assets", "vulnerabilities"], [["scans"], ["assets-min"]]);
   const { isAdmin, user } = useAuth();
   const queryClient = useQueryClient();
   const [target, setTarget] = useState("");

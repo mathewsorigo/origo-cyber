@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   Area,
   AreaChart,
@@ -24,6 +23,7 @@ import {
   type Severity,
   type VulnStatus,
 } from "@/lib/domain";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -41,7 +41,6 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Dashboard() {
-  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard"],
@@ -70,20 +69,11 @@ function Dashboard() {
     },
   });
 
-  useEffect(() => {
-    const channel = supabase
-      .channel("dashboard-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "vulnerabilities" }, () =>
-        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
-      )
-      .on("postgres_changes", { event: "*", schema: "public", table: "response_actions" }, () =>
-        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
+  useRealtimeSync(
+    "dashboard-live",
+    ["vulnerabilities", "response_actions", "incidents", "scans", "assets", "audit_log", "agent_status"],
+    [["dashboard"]],
+  );
 
   if (isLoading || !data) {
     return <p className="text-sm text-muted-foreground">Carregando telemetria…</p>;
