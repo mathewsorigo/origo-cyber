@@ -1,54 +1,60 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { z } from 'zod';
+import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
+import { canReportCommandResult } from "@/lib/workflow";
 
 const resultSchema = z.object({
   id: z.string().uuid(),
-  status: z.enum(['acknowledged', 'succeeded', 'failed']),
+  status: z.enum(["acknowledged", "succeeded", "failed"]),
   result: z.record(z.unknown()).optional(),
   error: z.string().max(4000).optional(),
 });
 
-export const Route = createFileRoute('/api/public/hermes/commands')({
+export const Route = createFileRoute("/api/public/hermes/commands")({
   server: {
     handlers: {
       // Agent pulls pending commands issued from the panel and marks them dispatched.
       GET: async ({ request }) => {
-        const { authenticateHermes, unauthorized, json, audit } = await import(
-          '@/lib/hermes-auth.server'
-        );
+        const { authenticateHermes, unauthorized, json, audit } =
+          await import("@/lib/hermes-auth.server");
         const caller = await authenticateHermes(request);
         if (!caller) return unauthorized();
 
-        const limitParam = Number(new URL(request.url).searchParams.get('limit') ?? '10');
+        const limitParam = Number(new URL(request.url).searchParams.get("limit") ?? "10");
         const limit = Math.min(Math.max(Number.isFinite(limitParam) ? limitParam : 10, 1), 50);
 
-        const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: pending, error } = await supabaseAdmin
-          .from('hermes_commands')
-          .select('id, command, args, created_at')
-          .eq('status', 'pending')
-          .order('created_at', { ascending: true })
+          .from("hermes_commands")
+          .select("id, command, args, created_at")
+          .eq("status", "pending")
+          .order("created_at", { ascending: true })
           .limit(limit);
 
         if (error) return json({ error: error.message }, 500);
-        if (!pending?.length) return json({ commands: [] });
+        const claimed = [];
+        for (const command of pending ?? []) {
+          const { data } = await supabaseAdmin
+            .from("hermes_commands")
+            .update({ status: "dispatched", dispatched_at: new Date().toISOString() })
+            .eq("id", command.id)
+            .eq("status", "pending")
+            .select("id, command, args, created_at")
+            .maybeSingle();
+          if (data) claimed.push(data);
+        }
 
-        const ids = pending.map((c) => c.id);
-        await supabaseAdmin
-          .from('hermes_commands')
-          .update({ status: 'dispatched', dispatched_at: new Date().toISOString() })
-          .in('id', ids);
+        if (!claimed.length) return json({ commands: [] });
+        await audit(caller, "hermes.commands.pulled", "hermes_command", null, {
+          count: claimed.length,
+        });
 
-        await audit(caller, 'hermes.commands.pulled', 'hermes_command', null, { count: ids.length });
-
-        return json({ commands: pending });
+        return json({ commands: claimed });
       },
 
       // Agent reports command execution outcome.
       POST: async ({ request }) => {
-        const { authenticateHermes, unauthorized, badRequest, json, audit } = await import(
-          '@/lib/hermes-auth.server'
-        );
+        const { authenticateHermes, unauthorized, badRequest, json, audit } =
+          await import("@/lib/hermes-auth.server");
         const caller = await authenticateHermes(request);
         if (!caller) return unauthorized();
 
@@ -56,30 +62,45 @@ export const Route = createFileRoute('/api/public/hermes/commands')({
         try {
           raw = await request.json();
         } catch {
-          return badRequest('Invalid JSON body');
+          return badRequest("Invalid JSON body");
         }
         const parsed = resultSchema.safeParse(raw);
-        if (!parsed.success) return badRequest('Invalid payload', parsed.error.issues);
+        if (!parsed.success) return badRequest("Invalid payload", parsed.error.issues);
         const body = parsed.data;
 
-        const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-        const terminal = body.status === 'succeeded' || body.status === 'failed';
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: current, error: lookupError } = await supabaseAdmin
+          .from("hermes_commands")
+          .select("id, status")
+          .eq("id", body.id)
+          .maybeSingle();
+        if (lookupError) return json({ error: lookupError.message }, 500);
+        if (!current) return json({ error: "Command not found" }, 404);
+        if (!canReportCommandResult(current.status, body.status)) {
+          return json(
+            { error: `Invalid command transition: ${current.status} -> ${body.status}` },
+            409,
+          );
+        }
+
+        const terminal = body.status === "succeeded" || body.status === "failed";
         const { data, error } = await supabaseAdmin
-          .from('hermes_commands')
+          .from("hermes_commands")
           .update({
             status: body.status,
             result: (body.result ?? null) as never,
             error: body.error ?? null,
             ...(terminal ? { completed_at: new Date().toISOString() } : {}),
           })
-          .eq('id', body.id)
-          .select('id, command, status')
+          .eq("id", body.id)
+          .in("status", ["dispatched", "acknowledged"])
+          .select("id, command, status")
           .maybeSingle();
 
         if (error) return json({ error: error.message }, 500);
-        if (!data) return json({ error: 'Command not found' }, 404);
+        if (!data) return json({ error: "Command not found" }, 404);
 
-        await audit(caller, `hermes.command.${body.status}`, 'hermes_command', data.id, {
+        await audit(caller, `hermes.command.${body.status}`, "hermes_command", data.id, {
           command: data.command,
           error: body.error ?? null,
         });

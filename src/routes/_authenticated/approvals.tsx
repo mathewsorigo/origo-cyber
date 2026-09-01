@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
+import { runControlAction } from "@/lib/panel-control";
 
 export const Route = createFileRoute("/_authenticated/approvals")({
   head: () => ({
@@ -23,7 +24,8 @@ export const Route = createFileRoute("/_authenticated/approvals")({
       { title: "Aprovações de resposta — Órigo Cyber" },
       {
         name: "description",
-        content: "Aprove ou rejeite ações automáticas propostas pelo agente Hermes com justificativa.",
+        content:
+          "Aprove ou rejeite ações automáticas propostas pelo agente Hermes com justificativa.",
       },
       { property: "og:title", content: "Aprovações de resposta — Órigo Cyber" },
       { property: "og:description", content: "Fila de aprovação de ações do agente Hermes." },
@@ -33,8 +35,12 @@ export const Route = createFileRoute("/_authenticated/approvals")({
 });
 
 function ApprovalsPage() {
-  useRealtimeSync("approvals-live", ["response_actions", "incidents", "vulnerabilities"], [["response-actions"], ["pending-actions-count"]]);
-  const { isAdmin, user } = useAuth();
+  useRealtimeSync(
+    "approvals-live",
+    ["response_actions", "incidents", "vulnerabilities"],
+    [["response-actions"], ["pending-actions-count"]],
+  );
+  const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [notes, setNotes] = useState<Record<string, string>>({});
 
@@ -61,16 +67,11 @@ function ApprovalsPage() {
       justification: string;
     }) => {
       if (!justification.trim()) throw new Error("Justificativa obrigatória.");
-      const { error } = await supabase
-        .from("response_actions")
-        .update({
-          status: approve ? "approved" : "rejected",
-          decided_at: new Date().toISOString(),
-          decided_by: user?.id ?? null,
-          decision_reason: justification.trim(),
-        })
-        .eq("id", id);
-      if (error) throw error;
+      await runControlAction("response_action.decide", {
+        id,
+        decision: approve ? "approve" : "reject",
+        justification: justification.trim(),
+      });
     },
     onSuccess: (_d, vars) => {
       toast.success(vars.approve ? "Ação aprovada e enfileirada" : "Ação rejeitada");
@@ -101,8 +102,7 @@ function ApprovalsPage() {
             <ul className="space-y-3">
               {pending.map((a) => {
                 const severity = (a.incidents?.severity ?? a.vulnerabilities?.severity) as
-                  | Severity
-                  | undefined;
+                  Severity | undefined;
                 return (
                   <li key={a.id} className="rounded-md border border-high/40 bg-high/5 p-3">
                     <div className="flex flex-wrap items-center gap-2">
@@ -115,10 +115,21 @@ function ApprovalsPage() {
                       </span>
                     </div>
                     <p className="mt-1.5 text-sm">{a.title}</p>
+                    {a.rationale && (
+                      <p className="mt-1 text-xs text-muted-foreground">Motivo: {a.rationale}</p>
+                    )}
                     <p className="mt-1 font-mono text-[10px] text-muted-foreground">
                       risco: {a.risk} ·{" "}
                       {a.incidents?.reference ?? a.vulnerabilities?.title ?? "sem vínculo"}
                     </p>
+                    <details className="mt-2 rounded border border-border p-2 text-xs">
+                      <summary className="cursor-pointer font-mono text-[10px] uppercase text-muted-foreground">
+                        Escopo técnico da execução
+                      </summary>
+                      <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-all font-mono text-[10px]">
+                        {JSON.stringify(a.payload ?? {}, null, 2)}
+                      </pre>
+                    </details>
                     {isAdmin ? (
                       <div className="mt-3 space-y-2">
                         <Textarea
@@ -177,7 +188,9 @@ function ApprovalsPage() {
               {history.map((a) => (
                 <li key={a.id} className="border-b border-border pb-3 last:border-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-xs">{actionTypeLabel[a.action_type] ?? a.action_type}</span>
+                    <span className="font-mono text-xs">
+                      {actionTypeLabel[a.action_type] ?? a.action_type}
+                    </span>
                     <StatusPill
                       label={actionStatusLabel[a.status as ActionStatus]}
                       tone={
@@ -195,6 +208,11 @@ function ApprovalsPage() {
                   <p className="mt-1 text-sm">{a.title}</p>
                   {a.decision_reason && (
                     <p className="mt-1 text-xs text-muted-foreground">“{a.decision_reason}”</p>
+                  )}
+                  {a.result && (
+                    <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap break-all rounded border border-border p-2 font-mono text-[10px] text-muted-foreground">
+                      {JSON.stringify(a.result, null, 2)}
+                    </pre>
                   )}
                 </li>
               ))}

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
+import { runControlAction } from "@/lib/panel-control";
 
 export const Route = createFileRoute("/_authenticated/scans")({
   head: () => ({
@@ -42,8 +43,12 @@ const profiles = [
 ];
 
 function ScansPage() {
-  useRealtimeSync("scans-live", ["scans", "assets", "vulnerabilities"], [["scans"], ["assets-min"]]);
-  const { isAdmin, user } = useAuth();
+  useRealtimeSync(
+    "scans-live",
+    ["scans", "assets", "vulnerabilities"],
+    [["scans"], ["assets-min"]],
+  );
+  const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [target, setTarget] = useState("");
   const [assetId, setAssetId] = useState<string>("none");
@@ -74,25 +79,11 @@ function ScansPage() {
   const launch = useMutation({
     mutationFn: async () => {
       if (!target.trim()) throw new Error("Informe o alvo do scan.");
-      const { data: scan, error } = await supabase
-        .from("scans")
-        .insert({
-          target: target.trim(),
-          asset_id: assetId === "none" ? null : assetId,
-          scan_type: profile,
-          status: "queued",
-          started_by: user?.id ?? null,
-        })
-        .select("id")
-        .single();
-      if (error) throw error;
-      const { error: cmdError } = await supabase.from("hermes_commands").insert({
-        command: "start_scan",
-        args: { scan_id: scan.id, target: target.trim(), scan_type: profile },
-        status: "pending",
-        issued_by: user?.id ?? null,
+      await runControlAction("scan.create", {
+        target: target.trim(),
+        asset_id: assetId === "none" ? null : assetId,
+        scan_type: profile,
       });
-      if (cmdError) throw cmdError;
     },
     onSuccess: () => {
       toast.success("Scan enfileirado para o Hermes");
@@ -104,15 +95,7 @@ function ScansPage() {
 
   const cancel = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("scans").update({ status: "cancelled" }).eq("id", id);
-      if (error) throw error;
-      const { error: cmdError } = await supabase.from("hermes_commands").insert({
-        command: "cancel_scan",
-        args: { scan_id: id },
-        status: "pending",
-        issued_by: user?.id ?? null,
-      });
-      if (cmdError) throw cmdError;
+      await runControlAction("scan.cancel", { id, note: "Cancelado pelo administrador no painel" });
     },
     onSuccess: () => {
       toast.success("Cancelamento enviado ao agente");
@@ -159,7 +142,11 @@ function ScansPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Button className="w-full" onClick={() => launch.mutate()} disabled={launch.isPending}>
+              <Button
+                className="w-full"
+                onClick={() => launch.mutate()}
+                disabled={launch.isPending}
+              >
                 Disparar scan
               </Button>
               <p className="text-xs text-muted-foreground">

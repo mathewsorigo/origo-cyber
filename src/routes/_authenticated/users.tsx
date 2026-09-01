@@ -7,6 +7,7 @@ import { EmptyState, PageHeader, Panel, StatusPill } from "@/components/common";
 import { formatDateTime } from "@/lib/domain";
 import { Button } from "@/components/ui/button";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
+import { runControlAction } from "@/lib/panel-control";
 
 const roles = ["admin", "analyst", "viewer"] as const;
 type AppRole = (typeof roles)[number];
@@ -58,13 +59,7 @@ function UsersPage() {
 
   const setRole = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
-      const { error: deleteError } = await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", userId);
-      if (deleteError) throw deleteError;
-      const { error } = await supabase.from("user_roles").insert({ user_id: userId, role });
-      if (error) throw error;
+      await runControlAction("user.role", { user_id: userId, role });
     },
     onSuccess: () => {
       toast.success("Papel atualizado");

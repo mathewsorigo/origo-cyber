@@ -17,6 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
+import { runControlAction } from "@/lib/panel-control";
+import { Textarea } from "@/components/ui/textarea";
 
 const kinds = ["host", "domain", "repository", "cloud", "endpoint", "database", "saas"] as const;
 const criticalities = ["critical", "high", "medium", "low"] as const;
@@ -38,13 +40,16 @@ export const Route = createFileRoute("/_authenticated/assets")({
 
 function AssetsPage() {
   useRealtimeSync("assets-live", ["assets", "vulnerabilities"], [["assets"], ["assets-min"]]);
-  const { isAdmin, user } = useAuth();
+  const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [identifier, setIdentifier] = useState("");
   const [kind, setKind] = useState<(typeof kinds)[number]>("host");
   const [criticality, setCriticality] = useState<Severity>("medium");
   const [owner, setOwner] = useState("");
+  const [environment, setEnvironment] = useState("production");
+  const [tags, setTags] = useState("");
+  const [notes, setNotes] = useState("");
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["assets"],
@@ -60,22 +65,29 @@ function AssetsPage() {
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!name.trim() || !identifier.trim()) throw new Error("Nome e identificador são obrigatórios.");
-      const { error } = await supabase.from("assets").insert({
+      if (!name.trim() || !identifier.trim())
+        throw new Error("Nome e identificador são obrigatórios.");
+      await runControlAction("asset.create", {
         name: name.trim(),
         identifier: identifier.trim(),
         kind,
         criticality,
         owner_team: owner.trim() || null,
-        monitored: true,
+        environment: environment.trim() || "production",
+        tags: tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        notes: notes.trim() || null,
       });
-      if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Ativo cadastrado");
       setName("");
       setIdentifier("");
       setOwner("");
+      setTags("");
+      setNotes("");
       queryClient.invalidateQueries({ queryKey: ["assets"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -83,8 +95,7 @@ function AssetsPage() {
 
   const toggleMonitor = useMutation({
     mutationFn: async ({ id, monitored }: { id: string; monitored: boolean }) => {
-      const { error } = await supabase.from("assets").update({ monitored }).eq("id", id);
-      if (error) throw error;
+      await runControlAction("asset.update", { id, monitored });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["assets"] }),
     onError: (e: Error) => toast.error(e.message),
@@ -92,10 +103,7 @@ function AssetsPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Ativos monitorados"
-        subtitle="Escopo que o Hermes varre continuamente."
-      />
+      <PageHeader title="Ativos monitorados" subtitle="Escopo que o Hermes varre continuamente." />
 
       <div className="grid gap-4 xl:grid-cols-3">
         <Panel title="Novo ativo">
@@ -136,12 +144,33 @@ function AssetsPage() {
                 value={owner}
                 onChange={(e) => setOwner(e.target.value)}
               />
-              <Button className="w-full" onClick={() => create.mutate()} disabled={create.isPending}>
+              <Input
+                placeholder="Ambiente (production, staging…)"
+                value={environment}
+                onChange={(e) => setEnvironment(e.target.value)}
+              />
+              <Input
+                placeholder="Tags separadas por vírgula"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+              />
+              <Textarea
+                placeholder="Observações operacionais"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+              <Button
+                className="w-full"
+                onClick={() => create.mutate()}
+                disabled={create.isPending}
+              >
                 Cadastrar ativo
               </Button>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Somente administradores editam o escopo.</p>
+            <p className="text-sm text-muted-foreground">
+              Somente administradores editam o escopo.
+            </p>
           )}
         </Panel>
 
@@ -180,8 +209,8 @@ function AssetsPage() {
                       </div>
                     </div>
                     <p className="mt-1 font-mono text-[10px] text-muted-foreground">
-                      {a.identifier} · {a.owner_team ?? "sem responsável"} · {openVulns.length} achado(s)
-                      aberto(s)
+                      {a.identifier} · {a.environment} · {a.owner_team ?? "sem responsável"} ·{" "}
+                      {openVulns.length} achado(s) aberto(s)
                     </p>
                   </li>
                 );

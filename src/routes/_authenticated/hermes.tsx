@@ -14,7 +14,7 @@ import {
 } from "@/lib/domain";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+
 import {
   Select,
   SelectContent,
@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
+import { runControlAction } from "@/lib/panel-control";
 
 export const Route = createFileRoute("/_authenticated/hermes")({
   head: () => ({
@@ -30,7 +31,8 @@ export const Route = createFileRoute("/_authenticated/hermes")({
       { title: "Controle do Hermes — Órigo Cyber" },
       {
         name: "description",
-        content: "Modo de operação, políticas de resposta automática e comandos enviados ao agente Hermes.",
+        content:
+          "Modo de operação, políticas de resposta automática e comandos enviados ao agente Hermes.",
       },
       { property: "og:title", content: "Controle do Hermes — Órigo Cyber" },
       { property: "og:description", content: "Governança e comandos do agente Hermes." },
@@ -42,20 +44,10 @@ export const Route = createFileRoute("/_authenticated/hermes")({
 const modes = [
   { value: "monitor_only", label: "Somente monitorar" },
   { value: "supervised", label: "Supervisionado (aprovação humana)" },
-  { value: "autonomous", label: "Autônomo (dentro da política)" },
-];
-
-const autoActions = [
-  { value: "block_ip", label: "Bloquear IP" },
-  { value: "quarantine_file", label: "Quarentena de arquivo" },
-  { value: "isolate_host", label: "Isolar host" },
-  { value: "disable_user", label: "Desabilitar usuário" },
-  { value: "revoke_token", label: "Revogar token" },
-  { value: "rollback_deploy", label: "Reverter deploy" },
 ];
 
 function HermesPage() {
-  const { isAdmin, user } = useAuth();
+  const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [manualCommand, setManualCommand] = useState("pause_agent");
   const [commandTarget, setCommandTarget] = useState("");
@@ -79,24 +71,26 @@ function HermesPage() {
     },
   });
 
-  useRealtimeSync("hermes-live", ["agent_status", "hermes_policies", "hermes_commands"], [["hermes-control"], ["agent-status"]]);
+  useRealtimeSync(
+    "hermes-live",
+    ["agent_status", "hermes_policies", "hermes_commands"],
+    [["hermes-control"], ["agent-status"]],
+  );
 
   const savePolicy = useMutation({
-    mutationFn: async (patch: Partial<{
-      mode: string;
-      min_severity_to_act: Severity;
-      auto_approved_actions: string[];
-      scan_schedule: string;
-      maintenance_window: string | null;
-      paused: boolean;
-      notes: string | null;
-    }>) => {
+    mutationFn: async (
+      patch: Partial<{
+        mode: string;
+        min_severity_to_act: Severity;
+        auto_approved_actions: string[];
+        scan_schedule: string;
+        maintenance_window: string | null;
+        paused: boolean;
+        notes: string | null;
+      }>,
+    ) => {
       if (!data?.policy) throw new Error("Política não encontrada.");
-      const { error } = await supabase
-        .from("hermes_policies")
-        .update(patch)
-        .eq("id", data.policy.id);
-      if (error) throw error;
+      await runControlAction("policy.update", patch);
     },
     onSuccess: () => {
       toast.success("Política atualizada");
@@ -107,13 +101,7 @@ function HermesPage() {
 
   const sendCommand = useMutation({
     mutationFn: async ({ command, payload }: { command: string; payload?: unknown }) => {
-      const { error } = await supabase.from("hermes_commands").insert({
-        command,
-        args: (payload ?? {}) as never,
-        status: "pending",
-        issued_by: user?.id ?? null,
-      });
-      if (error) throw error;
+      await runControlAction("command.create", { command, args: payload ?? {} });
     },
     onSuccess: () => {
       toast.success("Comando enfileirado para o agente");
@@ -123,10 +111,10 @@ function HermesPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  if (isLoading || !data) return <p className="text-sm text-muted-foreground">Carregando agente…</p>;
+  if (isLoading || !data)
+    return <p className="text-sm text-muted-foreground">Carregando agente…</p>;
 
   const policy = data.policy;
-  const enabled = policy?.auto_approved_actions ?? [];
 
   return (
     <div>
@@ -143,10 +131,7 @@ function HermesPage() {
               >
                 Pausar agente
               </Button>
-              <Button
-                size="sm"
-                onClick={() => sendCommand.mutate({ command: "resume_agent" })}
-              >
+              <Button size="sm" onClick={() => sendCommand.mutate({ command: "resume_agent" })}>
                 Retomar agente
               </Button>
             </>
@@ -162,7 +147,11 @@ function HermesPage() {
           tone={data.agent?.health === "healthy" ? "primary" : "critical"}
         />
         <StatCard label="Versão" value={data.agent?.version ?? "—"} hint="build em produção" />
-        <StatCard label="Fila de comandos" value={data.agent?.queue_size ?? 0} hint="não confirmados" />
+        <StatCard
+          label="Fila de comandos"
+          value={data.agent?.queue_size ?? 0}
+          hint="não confirmados"
+        />
         <StatCard
           label="Modo atual"
           value={modes.find((m) => m.value === policy?.mode)?.label.split(" ")[0] ?? "—"}
@@ -221,28 +210,15 @@ function HermesPage() {
                 </Select>
               </div>
 
-              <div>
+              <div className="rounded-md border border-high/40 bg-high/5 p-3">
                 <p className="mb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Ações com aprovação automática
+                  Execução crítica
                 </p>
-                <ul className="space-y-2">
-                  {autoActions.map((a) => (
-                    <li key={a.value} className="flex items-center justify-between text-sm">
-                      <span>{a.label}</span>
-                      <Switch
-                        checked={enabled.includes(a.value)}
-                        disabled={!isAdmin}
-                        onCheckedChange={(on) =>
-                          savePolicy.mutate({
-                            auto_approved_actions: on
-                              ? [...enabled, a.value]
-                              : enabled.filter((v: string) => v !== a.value),
-                          })
-                        }
-                      />
-                    </li>
-                  ))}
-                </ul>
+                <p className="text-sm text-muted-foreground">
+                  Autoaprovações estão desabilitadas. Isolamento, bloqueio, quarentena, patch e
+                  ações de identidade passam pela fila de aprovação com justificativa, rollback e
+                  validação.
+                </p>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
@@ -289,9 +265,7 @@ function HermesPage() {
                     <SelectItem value="resume_agent">Retomar agente</SelectItem>
                     <SelectItem value="reload_policy">Recarregar política</SelectItem>
                     <SelectItem value="update_signatures">Atualizar assinaturas</SelectItem>
-                    <SelectItem value="isolate_host">Isolar host</SelectItem>
-                    <SelectItem value="block_ip">Bloquear IP</SelectItem>
-                    <SelectItem value="collect_forensics">Coletar forense</SelectItem>
+                    <SelectItem value="ping">Testar comunicação</SelectItem>
                   </SelectContent>
                 </Select>
                 <Input
@@ -325,21 +299,38 @@ function HermesPage() {
             ) : (
               <ul className="space-y-2">
                 {data.commands.map((c) => (
-                  <li key={c.id} className="flex flex-wrap items-center gap-2 border-b border-border pb-2 text-xs last:border-0">
-                    <span className="font-mono text-primary">{c.command}</span>
-                    <StatusPill
-                      label={commandStatusLabel[c.status as CommandStatus]}
-                      tone={
-                        c.status === "succeeded"
-                          ? "primary"
-                          : c.status === "failed"
-                            ? "critical"
-                            : "muted"
-                      }
-                    />
-                    <span className="ml-auto font-mono text-[10px] text-muted-foreground">
-                      {formatDateTime(c.created_at)}
-                    </span>
+                  <li key={c.id} className="border-b border-border pb-2 text-xs last:border-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono text-primary">{c.command}</span>
+                      <StatusPill
+                        label={commandStatusLabel[c.status as CommandStatus]}
+                        tone={
+                          c.status === "succeeded"
+                            ? "primary"
+                            : c.status === "failed"
+                              ? "critical"
+                              : "muted"
+                        }
+                      />
+                      <span className="ml-auto font-mono text-[10px] text-muted-foreground">
+                        {formatDateTime(c.created_at)}
+                      </span>
+                    </div>
+                    {c.error && <p className="mt-1 text-xs text-critical">{c.error}</p>}
+                    {(Object.keys(c.args ?? {}).length > 0 || c.result) && (
+                      <details className="mt-1 rounded border border-border p-2">
+                        <summary className="cursor-pointer font-mono text-[10px] uppercase text-muted-foreground">
+                          Entrada e resultado
+                        </summary>
+                        <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-all font-mono text-[10px] text-muted-foreground">
+                          {JSON.stringify(
+                            { args: c.args ?? {}, result: c.result ?? null },
+                            null,
+                            2,
+                          )}
+                        </pre>
+                      </details>
+                    )}
                   </li>
                 ))}
               </ul>

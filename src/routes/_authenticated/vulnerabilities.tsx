@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +22,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
+import { runControlAction } from "@/lib/panel-control";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 const statuses: VulnStatus[] = [
   "new",
@@ -42,20 +45,31 @@ export const Route = createFileRoute("/_authenticated/vulnerabilities")({
         content: "Triagem das vulnerabilidades detectadas pelo agente Hermes com SLA e severidade.",
       },
       { property: "og:title", content: "Vulnerabilidades — Órigo Cyber" },
-      { property: "og:description", content: "Triagem de vulnerabilidades detectadas pelo Hermes." },
+      {
+        property: "og:description",
+        content: "Triagem de vulnerabilidades detectadas pelo Hermes.",
+      },
     ],
   }),
   component: VulnerabilitiesPage,
 });
 
 function VulnerabilitiesPage() {
-  useRealtimeSync("vulns-live", ["vulnerabilities", "assets", "response_actions"], [["vulnerabilities"]]);
+  useRealtimeSync(
+    "vulns-live",
+    ["vulnerabilities", "assets", "response_actions"],
+    [["vulnerabilities"]],
+  );
   const { canTriage } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [severity, setSeverity] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
   const [selected, setSelected] = useState<string | null>(null);
+  const [statusDraft, setStatusDraft] = useState<VulnStatus>("new");
+  const [dueAt, setDueAt] = useState("");
+  const [remediation, setRemediation] = useState("");
+  const [triageNote, setTriageNote] = useState("");
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["vulnerabilities"],
@@ -70,15 +84,18 @@ function VulnerabilitiesPage() {
   });
 
   const updateStatus = useMutation({
-    mutationFn: async ({ id, next }: { id: string; next: VulnStatus }) => {
-      const { error } = await supabase
-        .from("vulnerabilities")
-        .update({ status: next })
-        .eq("id", id);
-      if (error) throw error;
+    mutationFn: async ({ id }: { id: string }) => {
+      await runControlAction("vulnerability.update", {
+        id,
+        status: statusDraft,
+        due_at: dueAt ? new Date(`${dueAt}T23:59:59Z`).toISOString() : null,
+        remediation: remediation.trim() || null,
+        note: triageNote.trim(),
+      });
     },
     onSuccess: () => {
       toast.success("Status atualizado");
+      setTriageNote("");
       queryClient.invalidateQueries({ queryKey: ["vulnerabilities"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -103,6 +120,14 @@ function VulnerabilitiesPage() {
   );
 
   const current = rows.find((v) => v.id === selected) ?? null;
+
+  useEffect(() => {
+    if (!current) return;
+    setStatusDraft(current.status as VulnStatus);
+    setDueAt(current.due_at ? current.due_at.slice(0, 10) : "");
+    setRemediation(current.remediation ?? "");
+    setTriageNote("");
+  }, [current]);
 
   return (
     <div>
@@ -188,7 +213,11 @@ function VulnerabilitiesPage() {
                         <td className="py-2 pr-4 text-muted-foreground">
                           {vulnStatusLabel[v.status as VulnStatus]}
                         </td>
-                        <td className={`py-2 font-mono text-xs ${sla.danger ? "text-critical" : sla.warn ? "text-high" : "text-muted-foreground"}`}>{sla.label}</td>
+                        <td
+                          className={`py-2 font-mono text-xs ${sla.danger ? "text-critical" : sla.warn ? "text-high" : "text-muted-foreground"}`}
+                        >
+                          {sla.label}
+                        </td>
                       </tr>
                     );
                   })}
@@ -221,7 +250,7 @@ function VulnerabilitiesPage() {
                 <Field label="Fingerprint" value={current.fingerprint} mono />
                 <Field label="Detectado" value={formatDateTime(current.detected_at)} />
                 <Field label="Prazo" value={formatDateTime(current.due_at)} />
-                </dl>
+              </dl>
 
               {current.remediation && (
                 <div className="border-t border-border pt-3">
@@ -237,27 +266,51 @@ function VulnerabilitiesPage() {
                   Triagem
                 </p>
                 {canTriage ? (
-                  <Select
-                    value={current.status}
-                    onValueChange={(next) =>
-                      updateStatus.mutate({ id: current.id, next: next as VulnStatus })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statuses.map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {vulnStatusLabel[s]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-2">
+                    <Select
+                      value={statusDraft}
+                      onValueChange={(next) => setStatusDraft(next as VulnStatus)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statuses.map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {vulnStatusLabel[s]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="date"
+                      value={dueAt}
+                      onChange={(event) => setDueAt(event.target.value)}
+                    />
+                    <Textarea
+                      rows={3}
+                      placeholder="Plano de remediação"
+                      value={remediation}
+                      onChange={(event) => setRemediation(event.target.value)}
+                    />
+                    <Textarea
+                      rows={2}
+                      placeholder="Justificativa da decisão (obrigatória para resolver, aceitar risco ou falso positivo)"
+                      value={triageNote}
+                      onChange={(event) => setTriageNote(event.target.value)}
+                    />
+                    <Button
+                      className="w-full"
+                      disabled={updateStatus.isPending}
+                      onClick={() => updateStatus.mutate({ id: current.id })}
+                    >
+                      Salvar triagem
+                    </Button>
+                  </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    Seu perfil tem apenas leitura. Peça a um administrador permissão de analista para
-                    triar achados.
+                    Seu perfil tem apenas leitura. Peça a um administrador permissão de analista
+                    para triar achados.
                   </p>
                 )}
               </div>

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
+import { runControlAction } from "@/lib/panel-control";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 const phases: IncidentPhase[] = ["open", "contained", "eradicated", "recovered", "closed"];
 
@@ -43,6 +46,9 @@ function IncidentsPage() {
   const { canTriage } = useAuth();
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<string | null>(null);
+  const [phaseDraft, setPhaseDraft] = useState<IncidentPhase>("open");
+  const [summaryDraft, setSummaryDraft] = useState("");
+  const [decisionNote, setDecisionNote] = useState("");
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["incidents"],
@@ -57,22 +63,30 @@ function IncidentsPage() {
   });
 
   const setPhase = useMutation({
-    mutationFn: async ({ id, phase }: { id: string; phase: IncidentPhase }) => {
-      const patch = {
-        phase,
-        ...(phase === "closed" ? { closed_at: new Date().toISOString() } : {}),
-      };
-      const { error } = await supabase.from("incidents").update(patch).eq("id", id);
-      if (error) throw error;
+    mutationFn: async ({ id }: { id: string }) => {
+      await runControlAction("incident.update", {
+        id,
+        phase: phaseDraft,
+        summary: summaryDraft.trim() || null,
+        note: decisionNote.trim(),
+      });
     },
     onSuccess: () => {
       toast.success("Fase do incidente atualizada");
+      setDecisionNote("");
       queryClient.invalidateQueries({ queryKey: ["incidents"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const current = data.find((i) => i.id === selected) ?? null;
+
+  useEffect(() => {
+    if (!current) return;
+    setPhaseDraft(current.phase as IncidentPhase);
+    setSummaryDraft(current.summary ?? "");
+    setDecisionNote("");
+  }, [current]);
 
   return (
     <div>
@@ -151,23 +165,42 @@ function IncidentsPage() {
                   Fase da resposta
                 </p>
                 {canTriage ? (
-                  <Select
-                    value={current.phase}
-                    onValueChange={(p) =>
-                      setPhase.mutate({ id: current.id, phase: p as IncidentPhase })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {phases.map((p) => (
-                        <SelectItem key={p} value={p}>
-                          {incidentPhaseLabel[p]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-2">
+                    <Select
+                      value={phaseDraft}
+                      onValueChange={(p) => setPhaseDraft(p as IncidentPhase)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {phases.map((p) => (
+                          <SelectItem key={p} value={p}>
+                            {incidentPhaseLabel[p]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Textarea
+                      rows={3}
+                      value={summaryDraft}
+                      onChange={(e) => setSummaryDraft(e.target.value)}
+                      placeholder="Resumo operacional"
+                    />
+                    <Textarea
+                      rows={2}
+                      value={decisionNote}
+                      onChange={(e) => setDecisionNote(e.target.value)}
+                      placeholder="Justificativa (obrigatória para encerrar)"
+                    />
+                    <Button
+                      className="w-full"
+                      disabled={setPhase.isPending}
+                      onClick={() => setPhase.mutate({ id: current.id })}
+                    >
+                      Salvar incidente
+                    </Button>
+                  </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">
                     Apenas analistas e administradores alteram a fase.
