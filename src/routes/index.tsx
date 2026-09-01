@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Activity, ShieldCheck, Radar, Workflow } from "lucide-react";
+import { ShieldCheck, Radar, Workflow } from "lucide-react";
+import origoLogo from "@/assets/origo-logo.png.asset.json";
 import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/")({
@@ -46,7 +47,7 @@ function Landing() {
     <main className="grid-backdrop relative min-h-screen overflow-hidden">
       <div className="mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-16">
         <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.3em] text-primary">
-          <Activity className="size-4" /> Órigo Energia · Cyber Defense
+          <img src={origoLogo.url} alt="Órigo Cyber" className="size-7 object-contain" /> Órigo Energia · Cyber Defense
         </div>
         <h1 className="mt-6 text-4xl font-bold leading-tight sm:text-6xl">
           Central de comando <span className="text-primary text-glow">Hermes</span>

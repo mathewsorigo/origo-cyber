@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Activity, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import origoLogo from "@/assets/origo-logo.png.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/hooks/useAuth";
@@ -86,7 +87,7 @@ function AuthPage() {
     <main className="grid-backdrop flex min-h-screen items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center gap-2 font-mono text-xs uppercase tracking-[0.3em] text-primary">
-          <Activity className="size-4" /> Órigo · Hermes
+          <img src={origoLogo.url} alt="Órigo Cyber" className="size-6 object-contain" /> Órigo · Hermes
         </div>
         <div className="panel rounded-xl p-6">
           <h1 className="text-2xl font-bold">Acesso restrito</h1>

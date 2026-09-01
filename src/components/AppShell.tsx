@@ -2,7 +2,6 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import {
-  Activity,
   AlertTriangle,
   Bug,
   ClipboardList,
@@ -128,7 +127,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background/70 px-5 py-3 backdrop-blur">
           <div className="flex items-center gap-2 lg:hidden">
-            <Activity className="size-4 text-primary" />
+            <img src={origoLogo.url} alt="Órigo Cyber" className="size-5 object-contain" />
             <span className="font-display text-sm font-bold">ÓRIGO CYBER</span>
           </div>
           <div className="ml-auto flex items-center gap-3">
