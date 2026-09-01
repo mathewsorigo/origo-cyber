@@ -2,7 +2,6 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import {
-  Activity,
   AlertTriangle,
   Bug,
   ClipboardList,
@@ -18,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { roleLabel, relativeTime } from "@/lib/domain";
 import { Button } from "@/components/ui/button";
+import origoLogo from "@/assets/origo-logo.png.asset.json";
 
 const nav = [
   { to: "/dashboard", label: "Visão geral", icon: LayoutDashboard },
@@ -76,9 +76,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen">
       <aside className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
         <div className="flex items-center gap-2 px-5 py-5">
-          <div className="glow-primary flex size-9 items-center justify-center rounded-md bg-primary/15">
-            <Activity className="size-5 text-primary" />
-          </div>
+          <img src={origoLogo.url} alt="Órigo Cyber" className="size-9 object-contain" />
           <div>
             <p className="font-display text-sm font-bold leading-none">ÓRIGO CYBER</p>
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -129,7 +127,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background/70 px-5 py-3 backdrop-blur">
           <div className="flex items-center gap-2 lg:hidden">
-            <Activity className="size-4 text-primary" />
+            <img src={origoLogo.url} alt="Órigo Cyber" className="size-5 object-contain" />
             <span className="font-display text-sm font-bold">ÓRIGO CYBER</span>
           </div>
           <div className="ml-auto flex items-center gap-3">
