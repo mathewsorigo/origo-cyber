@@ -9,7 +9,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Painel de cyber segurança da Órigo: receba, triе e responda vulnerabilidades e incidentes detectados pelo agente Hermes.",
+          "Painel de cyber segurança da Órigo: receba, triage e responda vulnerabilidades e incidentes detectados pelo agente Hermes.",
       },
       { property: "og:title", content: "Órigo Cyber — Central de comando Hermes" },
       {
