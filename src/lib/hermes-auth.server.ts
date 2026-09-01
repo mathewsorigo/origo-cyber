@@ -35,14 +35,21 @@ function extractToken(request: Request): string | null {
 
 export type HermesCaller = { keyId: string | null; label: string };
 
+// SHA-256 allowlist for bootstrap credentials. Only non-reversible hashes are
+// committed; plaintext tokens remain in the corresponding Hermes profiles.
+const PROVISIONED_KEY_HASHES: Readonly<Record<string, string>> = {
+  '2bbb9448a12fc3001b0bccc011d0781d5285107dfd49ac4ad00f2d53e0bcba61':
+    'Hermes Vulnerabilidades',
+};
+
 /**
- * Authenticates the Hermes agent. Accepts either the shared ingest secret
- * (HERMES_INGEST_SECRET) or an active key stored in hermes_api_keys.
+ * Authenticates the Hermes agent. Accepts either the shared ingest secret,
+ * a provisioned bootstrap key, or an active key stored in hermes_api_keys.
  * Returns null when the caller is not authorized.
  */
 export async function authenticateHermes(request: Request): Promise<HermesCaller | null> {
   const token = extractToken(request);
-  if (!token || token.length < 16) return null;
+  if (!token || token.length < 32) return null;
 
   const shared = process.env['HERMES_INGEST_SECRET'];
   if (shared && timingSafeEqual(token, shared)) {
@@ -50,6 +57,9 @@ export async function authenticateHermes(request: Request): Promise<HermesCaller
   }
 
   const hash = await sha256Hex(token);
+  const provisionedLabel = PROVISIONED_KEY_HASHES[hash];
+  if (provisionedLabel) return { keyId: null, label: provisionedLabel };
+
   const { data } = await supabaseAdmin
     .from('hermes_api_keys')
     .select('id, label, revoked')
