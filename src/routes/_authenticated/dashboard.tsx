@@ -13,6 +13,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { EmptyState, Panel, SeverityBadge, StatCard, PageHeader } from "@/components/common";
 import {
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
   formatDateTime,
   incidentPhaseLabel,
   openVulnStatuses,
@@ -70,20 +71,11 @@ function Dashboard() {
     },
   });
 
-  useEffect(() => {
-    const channel = supabase
-      .channel("dashboard-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "vulnerabilities" }, () =>
-        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
-      )
-      .on("postgres_changes", { event: "*", schema: "public", table: "response_actions" }, () =>
-        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
+  useRealtimeSync(
+    "dashboard-live",
+    ["vulnerabilities", "response_actions", "incidents", "scans", "assets", "audit_log", "agent_status"],
+    [["dashboard"]],
+  );
 
   if (isLoading || !data) {
     return <p className="text-sm text-muted-foreground">Carregando telemetria…</p>;

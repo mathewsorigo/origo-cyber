@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { roleLabel, relativeTime } from "@/lib/domain";
 import { Button } from "@/components/ui/button";
 import origoLogo from "@/assets/origo-logo.png.asset.json";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 
 const nav = [
   { to: "/dashboard", label: "Visão geral", icon: LayoutDashboard },
@@ -32,6 +33,11 @@ const nav = [
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
+  useRealtimeSync(
+    "shell-live",
+    ["agent_status", "response_actions", "user_roles"],
+    [["agent-status"], ["pending-actions-count"], ["roles"]],
+  );
   const { user, roles } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();

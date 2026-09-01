@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
   Select,
   SelectContent,
   SelectItem,
@@ -78,17 +79,7 @@ function HermesPage() {
     },
   });
 
-  useEffect(() => {
-    const channel = supabase
-      .channel("hermes-control-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "agent_status" }, () =>
-        queryClient.invalidateQueries({ queryKey: ["hermes-control"] }),
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
+  useRealtimeSync("hermes-live", ["agent_status", "hermes_policies", "hermes_commands"], [["hermes-control"], ["agent-status"]]);
 
   const savePolicy = useMutation({
     mutationFn: async (patch: Partial<{
