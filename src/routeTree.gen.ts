@@ -20,9 +20,12 @@ import { Route as AuthenticatedHermesRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedIncidentsRouteImport } from './routes/_authenticated/incidents'
 import { Route as AuthenticatedScansRouteImport } from './routes/_authenticated/scans'
 import { Route as AuthenticatedVulnerabilitiesRouteImport } from './routes/_authenticated/vulnerabilities'
+import { Route as ApiPublicHermesActionsRouteImport } from './routes/api/public/hermes/actions'
+import { Route as ApiPublicHermesCommandsRouteImport } from './routes/api/public/hermes/commands'
 import { Route as ApiPublicHermesFindingsRouteImport } from './routes/api/public/hermes/findings'
 import { Route as ApiPublicHermesHeartbeatRouteImport } from './routes/api/public/hermes/heartbeat'
 import { Route as ApiPublicHermesIncidentsRouteImport } from './routes/api/public/hermes/incidents'
+import { Route as ApiPublicHermesScansRouteImport } from './routes/api/public/hermes/scans'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -79,6 +82,16 @@ const AuthenticatedVulnerabilitiesRoute =
     path: '/vulnerabilities',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicHermesActionsRoute = ApiPublicHermesActionsRouteImport.update({
+  id: '/api/public/hermes/actions',
+  path: '/api/public/hermes/actions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHermesCommandsRoute = ApiPublicHermesCommandsRouteImport.update({
+  id: '/api/public/hermes/commands',
+  path: '/api/public/hermes/commands',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHermesFindingsRoute = ApiPublicHermesFindingsRouteImport.update({
   id: '/api/public/hermes/findings',
   path: '/api/public/hermes/findings',
@@ -96,6 +109,11 @@ const ApiPublicHermesIncidentsRoute =
     path: '/api/public/hermes/incidents',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHermesScansRoute = ApiPublicHermesScansRouteImport.update({
+  id: '/api/public/hermes/scans',
+  path: '/api/public/hermes/scans',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -108,9 +126,12 @@ export interface FileRoutesByFullPath {
   '/incidents': typeof AuthenticatedIncidentsRoute
   '/scans': typeof AuthenticatedScansRoute
   '/vulnerabilities': typeof AuthenticatedVulnerabilitiesRoute
+  '/api/public/hermes/actions': typeof ApiPublicHermesActionsRoute
+  '/api/public/hermes/commands': typeof ApiPublicHermesCommandsRoute
   '/api/public/hermes/findings': typeof ApiPublicHermesFindingsRoute
   '/api/public/hermes/heartbeat': typeof ApiPublicHermesHeartbeatRoute
   '/api/public/hermes/incidents': typeof ApiPublicHermesIncidentsRoute
+  '/api/public/hermes/scans': typeof ApiPublicHermesScansRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -123,9 +144,12 @@ export interface FileRoutesByTo {
   '/incidents': typeof AuthenticatedIncidentsRoute
   '/scans': typeof AuthenticatedScansRoute
   '/vulnerabilities': typeof AuthenticatedVulnerabilitiesRoute
+  '/api/public/hermes/actions': typeof ApiPublicHermesActionsRoute
+  '/api/public/hermes/commands': typeof ApiPublicHermesCommandsRoute
   '/api/public/hermes/findings': typeof ApiPublicHermesFindingsRoute
   '/api/public/hermes/heartbeat': typeof ApiPublicHermesHeartbeatRoute
   '/api/public/hermes/incidents': typeof ApiPublicHermesIncidentsRoute
+  '/api/public/hermes/scans': typeof ApiPublicHermesScansRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -140,9 +164,12 @@ export interface FileRoutesById {
   '/_authenticated/incidents': typeof AuthenticatedIncidentsRoute
   '/_authenticated/scans': typeof AuthenticatedScansRoute
   '/_authenticated/vulnerabilities': typeof AuthenticatedVulnerabilitiesRoute
+  '/api/public/hermes/actions': typeof ApiPublicHermesActionsRoute
+  '/api/public/hermes/commands': typeof ApiPublicHermesCommandsRoute
   '/api/public/hermes/findings': typeof ApiPublicHermesFindingsRoute
   '/api/public/hermes/heartbeat': typeof ApiPublicHermesHeartbeatRoute
   '/api/public/hermes/incidents': typeof ApiPublicHermesIncidentsRoute
+  '/api/public/hermes/scans': typeof ApiPublicHermesScansRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -157,9 +184,12 @@ export interface FileRouteTypes {
     | '/incidents'
     | '/scans'
     | '/vulnerabilities'
+    | '/api/public/hermes/actions'
+    | '/api/public/hermes/commands'
     | '/api/public/hermes/findings'
     | '/api/public/hermes/heartbeat'
     | '/api/public/hermes/incidents'
+    | '/api/public/hermes/scans'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -172,9 +202,12 @@ export interface FileRouteTypes {
     | '/incidents'
     | '/scans'
     | '/vulnerabilities'
+    | '/api/public/hermes/actions'
+    | '/api/public/hermes/commands'
     | '/api/public/hermes/findings'
     | '/api/public/hermes/heartbeat'
     | '/api/public/hermes/incidents'
+    | '/api/public/hermes/scans'
   id:
     | '__root__'
     | '/'
@@ -188,18 +221,24 @@ export interface FileRouteTypes {
     | '/_authenticated/incidents'
     | '/_authenticated/scans'
     | '/_authenticated/vulnerabilities'
+    | '/api/public/hermes/actions'
+    | '/api/public/hermes/commands'
     | '/api/public/hermes/findings'
     | '/api/public/hermes/heartbeat'
     | '/api/public/hermes/incidents'
+    | '/api/public/hermes/scans'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicHermesActionsRoute: typeof ApiPublicHermesActionsRoute
+  ApiPublicHermesCommandsRoute: typeof ApiPublicHermesCommandsRoute
   ApiPublicHermesFindingsRoute: typeof ApiPublicHermesFindingsRoute
   ApiPublicHermesHeartbeatRoute: typeof ApiPublicHermesHeartbeatRoute
   ApiPublicHermesIncidentsRoute: typeof ApiPublicHermesIncidentsRoute
+  ApiPublicHermesScansRoute: typeof ApiPublicHermesScansRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -281,6 +320,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVulnerabilitiesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/hermes/actions': {
+      id: '/api/public/hermes/actions'
+      path: '/api/public/hermes/actions'
+      fullPath: '/api/public/hermes/actions'
+      preLoaderRoute: typeof ApiPublicHermesActionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hermes/commands': {
+      id: '/api/public/hermes/commands'
+      path: '/api/public/hermes/commands'
+      fullPath: '/api/public/hermes/commands'
+      preLoaderRoute: typeof ApiPublicHermesCommandsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hermes/findings': {
       id: '/api/public/hermes/findings'
       path: '/api/public/hermes/findings'
@@ -300,6 +353,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hermes/incidents'
       fullPath: '/api/public/hermes/incidents'
       preLoaderRoute: typeof ApiPublicHermesIncidentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hermes/scans': {
+      id: '/api/public/hermes/scans'
+      path: '/api/public/hermes/scans'
+      fullPath: '/api/public/hermes/scans'
+      preLoaderRoute: typeof ApiPublicHermesScansRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -334,9 +394,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicHermesActionsRoute: ApiPublicHermesActionsRoute,
+  ApiPublicHermesCommandsRoute: ApiPublicHermesCommandsRoute,
   ApiPublicHermesFindingsRoute: ApiPublicHermesFindingsRoute,
   ApiPublicHermesHeartbeatRoute: ApiPublicHermesHeartbeatRoute,
   ApiPublicHermesIncidentsRoute: ApiPublicHermesIncidentsRoute,
+  ApiPublicHermesScansRoute: ApiPublicHermesScansRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
