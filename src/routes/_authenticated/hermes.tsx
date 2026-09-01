@@ -10,6 +10,7 @@ import {
   formatDateTime,
   relativeTime,
   type CommandStatus,
+  type Severity,
 } from "@/lib/domain";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
