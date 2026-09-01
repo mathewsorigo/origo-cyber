@@ -10,33 +10,155 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
+import { Route as AuthenticatedAssetsRouteImport } from './routes/_authenticated/assets'
+import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedHermesRouteImport } from './routes/_authenticated/hermes'
+import { Route as AuthenticatedIncidentsRouteImport } from './routes/_authenticated/incidents'
+import { Route as AuthenticatedScansRouteImport } from './routes/_authenticated/scans'
+import { Route as AuthenticatedVulnerabilitiesRouteImport } from './routes/_authenticated/vulnerabilities'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedApprovalsRoute = AuthenticatedApprovalsRouteImport.update({
+  id: '/approvals',
+  path: '/approvals',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAssetsRoute = AuthenticatedAssetsRouteImport.update({
+  id: '/assets',
+  path: '/assets',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAuditRoute = AuthenticatedAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHermesRoute = AuthenticatedHermesRouteImport.update({
+  id: '/hermes',
+  path: '/hermes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedIncidentsRoute = AuthenticatedIncidentsRouteImport.update({
+  id: '/incidents',
+  path: '/incidents',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedScansRoute = AuthenticatedScansRouteImport.update({
+  id: '/scans',
+  path: '/scans',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedVulnerabilitiesRoute =
+  AuthenticatedVulnerabilitiesRouteImport.update({
+    id: '/vulnerabilities',
+    path: '/vulnerabilities',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/approvals': typeof AuthenticatedApprovalsRoute
+  '/assets': typeof AuthenticatedAssetsRoute
+  '/audit': typeof AuthenticatedAuditRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/hermes': typeof AuthenticatedHermesRoute
+  '/incidents': typeof AuthenticatedIncidentsRoute
+  '/scans': typeof AuthenticatedScansRoute
+  '/vulnerabilities': typeof AuthenticatedVulnerabilitiesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/approvals': typeof AuthenticatedApprovalsRoute
+  '/assets': typeof AuthenticatedAssetsRoute
+  '/audit': typeof AuthenticatedAuditRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/hermes': typeof AuthenticatedHermesRoute
+  '/incidents': typeof AuthenticatedIncidentsRoute
+  '/scans': typeof AuthenticatedScansRoute
+  '/vulnerabilities': typeof AuthenticatedVulnerabilitiesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
+  '/_authenticated/assets': typeof AuthenticatedAssetsRoute
+  '/_authenticated/audit': typeof AuthenticatedAuditRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/hermes': typeof AuthenticatedHermesRoute
+  '/_authenticated/incidents': typeof AuthenticatedIncidentsRoute
+  '/_authenticated/scans': typeof AuthenticatedScansRoute
+  '/_authenticated/vulnerabilities': typeof AuthenticatedVulnerabilitiesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/approvals'
+    | '/assets'
+    | '/audit'
+    | '/dashboard'
+    | '/hermes'
+    | '/incidents'
+    | '/scans'
+    | '/vulnerabilities'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/approvals'
+    | '/assets'
+    | '/audit'
+    | '/dashboard'
+    | '/hermes'
+    | '/incidents'
+    | '/scans'
+    | '/vulnerabilities'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/approvals'
+    | '/_authenticated/assets'
+    | '/_authenticated/audit'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/hermes'
+    | '/_authenticated/incidents'
+    | '/_authenticated/scans'
+    | '/_authenticated/vulnerabilities'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +170,108 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/approvals': {
+      id: '/_authenticated/approvals'
+      path: '/approvals'
+      fullPath: '/approvals'
+      preLoaderRoute: typeof AuthenticatedApprovalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/assets': {
+      id: '/_authenticated/assets'
+      path: '/assets'
+      fullPath: '/assets'
+      preLoaderRoute: typeof AuthenticatedAssetsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/audit': {
+      id: '/_authenticated/audit'
+      path: '/audit'
+      fullPath: '/audit'
+      preLoaderRoute: typeof AuthenticatedAuditRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hermes': {
+      id: '/_authenticated/hermes'
+      path: '/hermes'
+      fullPath: '/hermes'
+      preLoaderRoute: typeof AuthenticatedHermesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/incidents': {
+      id: '/_authenticated/incidents'
+      path: '/incidents'
+      fullPath: '/incidents'
+      preLoaderRoute: typeof AuthenticatedIncidentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/scans': {
+      id: '/_authenticated/scans'
+      path: '/scans'
+      fullPath: '/scans'
+      preLoaderRoute: typeof AuthenticatedScansRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/vulnerabilities': {
+      id: '/_authenticated/vulnerabilities'
+      path: '/vulnerabilities'
+      fullPath: '/vulnerabilities'
+      preLoaderRoute: typeof AuthenticatedVulnerabilitiesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
+  AuthenticatedAssetsRoute: typeof AuthenticatedAssetsRoute
+  AuthenticatedAuditRoute: typeof AuthenticatedAuditRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedHermesRoute: typeof AuthenticatedHermesRoute
+  AuthenticatedIncidentsRoute: typeof AuthenticatedIncidentsRoute
+  AuthenticatedScansRoute: typeof AuthenticatedScansRoute
+  AuthenticatedVulnerabilitiesRoute: typeof AuthenticatedVulnerabilitiesRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedApprovalsRoute: AuthenticatedApprovalsRoute,
+  AuthenticatedAssetsRoute: AuthenticatedAssetsRoute,
+  AuthenticatedAuditRoute: AuthenticatedAuditRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedHermesRoute: AuthenticatedHermesRoute,
+  AuthenticatedIncidentsRoute: AuthenticatedIncidentsRoute,
+  AuthenticatedScansRoute: AuthenticatedScansRoute,
+  AuthenticatedVulnerabilitiesRoute: AuthenticatedVulnerabilitiesRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
