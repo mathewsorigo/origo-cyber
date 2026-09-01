@@ -94,7 +94,7 @@ function UsersPage() {
                     <span className="text-sm font-medium">{p.full_name ?? p.email ?? p.id}</span>
                     <StatusPill
                       label={roleLabel[current]}
-                      tone={current === "admin" ? "primary" : "default"}
+                      tone={current === "admin" ? "primary" : "muted"}
                     />
                     {p.id === user?.id && (
                       <span className="font-mono text-[10px] uppercase text-muted-foreground">

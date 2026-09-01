@@ -215,7 +215,7 @@ function HermesPage() {
                 <Select
                   value={policy.min_severity_to_act}
                   disabled={!isAdmin}
-                  onValueChange={(min_severity_to_act) => savePolicy.mutate({ min_severity_to_act })}
+                  onValueChange={(v) => savePolicy.mutate({ min_severity_to_act: v as Severity })}
                 >
                   <SelectTrigger>
                     <SelectValue />
