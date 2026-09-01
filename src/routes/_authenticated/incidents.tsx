@@ -13,13 +13,13 @@ import {
   type Severity,
 } from "@/lib/domain";
 import {
-import { useRealtimeSync } from "@/hooks/useRealtimeSync";
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 
 const phases: IncidentPhase[] = ["open", "contained", "eradicated", "recovered", "closed"];
 

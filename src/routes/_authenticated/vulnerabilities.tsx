@@ -15,13 +15,13 @@ import {
 } from "@/lib/domain";
 import { Input } from "@/components/ui/input";
 import {
-import { useRealtimeSync } from "@/hooks/useRealtimeSync";
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 
 const statuses: VulnStatus[] = [
   "new",

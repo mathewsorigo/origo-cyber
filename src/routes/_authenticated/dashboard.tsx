@@ -12,7 +12,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { EmptyState, Panel, SeverityBadge, StatCard, PageHeader } from "@/components/common";
 import {
-import { useRealtimeSync } from "@/hooks/useRealtimeSync";
   formatDateTime,
   incidentPhaseLabel,
   openVulnStatuses,
@@ -24,6 +23,7 @@ import { useRealtimeSync } from "@/hooks/useRealtimeSync";
   type Severity,
   type VulnStatus,
 } from "@/lib/domain";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({

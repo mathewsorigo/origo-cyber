@@ -10,13 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
-import { useRealtimeSync } from "@/hooks/useRealtimeSync";
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 
 const kinds = ["host", "domain", "repository", "cloud", "endpoint", "database", "saas"] as const;
 const criticalities = ["critical", "high", "medium", "low"] as const;
