@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedAssetsRouteImport } from './routes/_authenticated/assets'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedHermesRouteImport } from './routes/_authenticated/hermes'
 import { Route as AuthenticatedIncidentsRouteImport } from './routes/_authenticated/incidents'
 import { Route as AuthenticatedScansRouteImport } from './routes/_authenticated/scans'
 import { Route as AuthenticatedVulnerabilitiesRouteImport } from './routes/_authenticated/vulnerabilities'
@@ -48,6 +49,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHermesRoute = AuthenticatedHermesRouteImport.update({
+  id: '/hermes',
+  path: '/hermes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedIncidentsRoute = AuthenticatedIncidentsRouteImport.update({
   id: '/incidents',
   path: '/incidents',
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/assets': typeof AuthenticatedAssetsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/hermes': typeof AuthenticatedHermesRoute
   '/incidents': typeof AuthenticatedIncidentsRoute
   '/scans': typeof AuthenticatedScansRoute
   '/vulnerabilities': typeof AuthenticatedVulnerabilitiesRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/assets': typeof AuthenticatedAssetsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/hermes': typeof AuthenticatedHermesRoute
   '/incidents': typeof AuthenticatedIncidentsRoute
   '/scans': typeof AuthenticatedScansRoute
   '/vulnerabilities': typeof AuthenticatedVulnerabilitiesRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
   '/_authenticated/assets': typeof AuthenticatedAssetsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/hermes': typeof AuthenticatedHermesRoute
   '/_authenticated/incidents': typeof AuthenticatedIncidentsRoute
   '/_authenticated/scans': typeof AuthenticatedScansRoute
   '/_authenticated/vulnerabilities': typeof AuthenticatedVulnerabilitiesRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/approvals'
     | '/assets'
     | '/dashboard'
+    | '/hermes'
     | '/incidents'
     | '/scans'
     | '/vulnerabilities'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
     | '/approvals'
     | '/assets'
     | '/dashboard'
+    | '/hermes'
     | '/incidents'
     | '/scans'
     | '/vulnerabilities'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/_authenticated/approvals'
     | '/_authenticated/assets'
     | '/_authenticated/dashboard'
+    | '/_authenticated/hermes'
     | '/_authenticated/incidents'
     | '/_authenticated/scans'
     | '/_authenticated/vulnerabilities'
@@ -181,6 +193,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/hermes': {
+      id: '/_authenticated/hermes'
+      path: '/hermes'
+      fullPath: '/hermes'
+      preLoaderRoute: typeof AuthenticatedHermesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/incidents': {
       id: '/_authenticated/incidents'
       path: '/incidents'
@@ -209,6 +228,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
   AuthenticatedAssetsRoute: typeof AuthenticatedAssetsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedHermesRoute: typeof AuthenticatedHermesRoute
   AuthenticatedIncidentsRoute: typeof AuthenticatedIncidentsRoute
   AuthenticatedScansRoute: typeof AuthenticatedScansRoute
   AuthenticatedVulnerabilitiesRoute: typeof AuthenticatedVulnerabilitiesRoute
@@ -218,6 +238,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedApprovalsRoute: AuthenticatedApprovalsRoute,
   AuthenticatedAssetsRoute: AuthenticatedAssetsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedHermesRoute: AuthenticatedHermesRoute,
   AuthenticatedIncidentsRoute: AuthenticatedIncidentsRoute,
   AuthenticatedScansRoute: AuthenticatedScansRoute,
   AuthenticatedVulnerabilitiesRoute: AuthenticatedVulnerabilitiesRoute,
