@@ -19,6 +19,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedHermesRouteImport } from './routes/_authenticated/hermes'
 import { Route as AuthenticatedIncidentsRouteImport } from './routes/_authenticated/incidents'
 import { Route as AuthenticatedScansRouteImport } from './routes/_authenticated/scans'
+import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as AuthenticatedVulnerabilitiesRouteImport } from './routes/_authenticated/vulnerabilities'
 import { Route as ApiPublicHermesActionsRouteImport } from './routes/api/public/hermes/actions'
 import { Route as ApiPublicHermesCommandsRouteImport } from './routes/api/public/hermes/commands'
@@ -76,6 +77,11 @@ const AuthenticatedScansRoute = AuthenticatedScansRouteImport.update({
   path: '/scans',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedVulnerabilitiesRoute =
   AuthenticatedVulnerabilitiesRouteImport.update({
     id: '/vulnerabilities',
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/hermes': typeof AuthenticatedHermesRoute
   '/incidents': typeof AuthenticatedIncidentsRoute
   '/scans': typeof AuthenticatedScansRoute
+  '/users': typeof AuthenticatedUsersRoute
   '/vulnerabilities': typeof AuthenticatedVulnerabilitiesRoute
   '/api/public/hermes/actions': typeof ApiPublicHermesActionsRoute
   '/api/public/hermes/commands': typeof ApiPublicHermesCommandsRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/hermes': typeof AuthenticatedHermesRoute
   '/incidents': typeof AuthenticatedIncidentsRoute
   '/scans': typeof AuthenticatedScansRoute
+  '/users': typeof AuthenticatedUsersRoute
   '/vulnerabilities': typeof AuthenticatedVulnerabilitiesRoute
   '/api/public/hermes/actions': typeof ApiPublicHermesActionsRoute
   '/api/public/hermes/commands': typeof ApiPublicHermesCommandsRoute
@@ -163,6 +171,7 @@ export interface FileRoutesById {
   '/_authenticated/hermes': typeof AuthenticatedHermesRoute
   '/_authenticated/incidents': typeof AuthenticatedIncidentsRoute
   '/_authenticated/scans': typeof AuthenticatedScansRoute
+  '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/_authenticated/vulnerabilities': typeof AuthenticatedVulnerabilitiesRoute
   '/api/public/hermes/actions': typeof ApiPublicHermesActionsRoute
   '/api/public/hermes/commands': typeof ApiPublicHermesCommandsRoute
@@ -183,6 +192,7 @@ export interface FileRouteTypes {
     | '/hermes'
     | '/incidents'
     | '/scans'
+    | '/users'
     | '/vulnerabilities'
     | '/api/public/hermes/actions'
     | '/api/public/hermes/commands'
@@ -201,6 +211,7 @@ export interface FileRouteTypes {
     | '/hermes'
     | '/incidents'
     | '/scans'
+    | '/users'
     | '/vulnerabilities'
     | '/api/public/hermes/actions'
     | '/api/public/hermes/commands'
@@ -220,6 +231,7 @@ export interface FileRouteTypes {
     | '/_authenticated/hermes'
     | '/_authenticated/incidents'
     | '/_authenticated/scans'
+    | '/_authenticated/users'
     | '/_authenticated/vulnerabilities'
     | '/api/public/hermes/actions'
     | '/api/public/hermes/commands'
@@ -313,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedScansRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/users': {
+      id: '/_authenticated/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof AuthenticatedUsersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/vulnerabilities': {
       id: '/_authenticated/vulnerabilities'
       path: '/vulnerabilities'
@@ -373,6 +392,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHermesRoute: typeof AuthenticatedHermesRoute
   AuthenticatedIncidentsRoute: typeof AuthenticatedIncidentsRoute
   AuthenticatedScansRoute: typeof AuthenticatedScansRoute
+  AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
   AuthenticatedVulnerabilitiesRoute: typeof AuthenticatedVulnerabilitiesRoute
 }
 
@@ -384,6 +404,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHermesRoute: AuthenticatedHermesRoute,
   AuthenticatedIncidentsRoute: AuthenticatedIncidentsRoute,
   AuthenticatedScansRoute: AuthenticatedScansRoute,
+  AuthenticatedUsersRoute: AuthenticatedUsersRoute,
   AuthenticatedVulnerabilitiesRoute: AuthenticatedVulnerabilitiesRoute,
 }
 
