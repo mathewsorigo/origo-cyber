@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { EmptyState, PageHeader, Panel, SeverityBadge, StatusPill } from "@/components/common";
-import { assetKindLabel, relativeTime, type Severity } from "@/lib/domain";
+import { assetKindLabel, type Severity } from "@/lib/domain";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -68,13 +68,6 @@ function AssetsPage() {
         monitored: true,
       });
       if (error) throw error;
-      await supabase.from("audit_log").insert({
-        action: "asset.created",
-        actor_label: user?.email ?? "painel",
-        actor_id: user?.id ?? null,
-        entity_type: "asset",
-        details: { name: name.trim(), identifier: identifier.trim(), kind },
-      });
     },
     onSuccess: () => {
       toast.success("Ativo cadastrado");
@@ -186,7 +179,7 @@ function AssetsPage() {
                     </div>
                     <p className="mt-1 font-mono text-[10px] text-muted-foreground">
                       {a.identifier} · {a.owner_team ?? "sem responsável"} · {openVulns.length} achado(s)
-                      aberto(s) · último scan {relativeTime(a.last_scanned_at)}
+                      aberto(s)
                     </p>
                   </li>
                 );

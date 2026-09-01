@@ -80,9 +80,9 @@ function AuditPage() {
                     {e.entity_type} {e.entity_id ?? ""}
                   </p>
                 )}
-                {e.details && (
+                {e.detail && (
                   <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-all text-[10px] text-muted-foreground">
-                    {JSON.stringify(e.details)}
+                    {JSON.stringify(e.detail)}
                   </pre>
                 )}
               </li>

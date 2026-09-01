@@ -65,18 +65,10 @@ function ApprovalsPage() {
           status: approve ? "approved" : "rejected",
           decided_at: new Date().toISOString(),
           decided_by: user?.id ?? null,
-          decision_notes: justification.trim(),
+          decision_reason: justification.trim(),
         })
         .eq("id", id);
       if (error) throw error;
-      await supabase.from("audit_log").insert({
-        action: approve ? "action.approved" : "action.rejected",
-        actor_label: user?.email ?? "painel",
-        actor_id: user?.id ?? null,
-        entity_type: "response_action",
-        entity_id: id,
-        details: { justification: justification.trim() },
-      });
     },
     onSuccess: (_d, vars) => {
       toast.success(vars.approve ? "Ação aprovada e enfileirada" : "Ação rejeitada");
@@ -120,9 +112,9 @@ function ApprovalsPage() {
                         {relativeTime(a.created_at)}
                       </span>
                     </div>
-                    <p className="mt-1.5 text-sm">{a.description}</p>
+                    <p className="mt-1.5 text-sm">{a.title}</p>
                     <p className="mt-1 font-mono text-[10px] text-muted-foreground">
-                      alvo: {a.target ?? "—"} ·{" "}
+                      risco: {a.risk} ·{" "}
                       {a.incidents?.reference ?? a.vulnerabilities?.title ?? "sem vínculo"}
                     </p>
                     {isAdmin ? (
@@ -198,9 +190,9 @@ function ApprovalsPage() {
                       {formatDateTime(a.decided_at ?? a.created_at)}
                     </span>
                   </div>
-                  <p className="mt-1 text-sm">{a.description}</p>
-                  {a.decision_notes && (
-                    <p className="mt-1 text-xs text-muted-foreground">“{a.decision_notes}”</p>
+                  <p className="mt-1 text-sm">{a.title}</p>
+                  {a.decision_reason && (
+                    <p className="mt-1 text-xs text-muted-foreground">“{a.decision_reason}”</p>
                   )}
                 </li>
               ))}
