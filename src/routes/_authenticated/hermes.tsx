@@ -97,14 +97,6 @@ function HermesPage() {
         .update(patch)
         .eq("id", data.policy.id);
       if (error) throw error;
-      await supabase.from("audit_log").insert({
-        action: "policy.updated",
-        actor_label: user?.email ?? "painel",
-        actor_id: user?.id ?? null,
-        entity_type: "hermes_policy",
-        entity_id: data.policy.id,
-        details: patch,
-      });
     },
     onSuccess: () => {
       toast.success("Política atualizada");
@@ -117,18 +109,11 @@ function HermesPage() {
     mutationFn: async ({ command, payload }: { command: string; payload?: unknown }) => {
       const { error } = await supabase.from("hermes_commands").insert({
         command,
-        payload: (payload ?? {}) as never,
+        args: (payload ?? {}) as never,
         status: "pending",
         issued_by: user?.id ?? null,
       });
       if (error) throw error;
-      await supabase.from("audit_log").insert({
-        action: `command.${command}`,
-        actor_label: user?.email ?? "painel",
-        actor_id: user?.id ?? null,
-        entity_type: "hermes_command",
-        details: { command, payload },
-      });
     },
     onSuccess: () => {
       toast.success("Comando enfileirado para o agente");

@@ -219,8 +219,7 @@ function VulnerabilitiesPage() {
                 <Field label="Fingerprint" value={current.fingerprint} mono />
                 <Field label="Detectado" value={formatDateTime(current.detected_at)} />
                 <Field label="Prazo" value={formatDateTime(current.due_at)} />
-                <Field label="Ocorrências" value={String(current.occurrences ?? 1)} />
-              </dl>
+                </dl>
 
               {current.remediation && (
                 <div className="border-t border-border pt-3">

@@ -77,28 +77,20 @@ function ScansPage() {
         .insert({
           target: target.trim(),
           asset_id: assetId === "none" ? null : assetId,
-          profile,
+          scan_type: profile,
           status: "queued",
-          requested_by: user?.id ?? null,
+          started_by: user?.id ?? null,
         })
         .select("id")
         .single();
       if (error) throw error;
       const { error: cmdError } = await supabase.from("hermes_commands").insert({
         command: "start_scan",
-        payload: { scan_id: scan.id, target: target.trim(), profile },
+        args: { scan_id: scan.id, target: target.trim(), scan_type: profile },
         status: "pending",
         issued_by: user?.id ?? null,
       });
       if (cmdError) throw cmdError;
-      await supabase.from("audit_log").insert({
-        action: "scan.requested",
-        actor_label: user?.email ?? "painel",
-        actor_id: user?.id ?? null,
-        entity_type: "scan",
-        entity_id: scan.id,
-        details: { target: target.trim(), profile },
-      });
     },
     onSuccess: () => {
       toast.success("Scan enfileirado para o Hermes");
@@ -114,7 +106,7 @@ function ScansPage() {
       if (error) throw error;
       const { error: cmdError } = await supabase.from("hermes_commands").insert({
         command: "cancel_scan",
-        payload: { scan_id: id },
+        args: { scan_id: id },
         status: "pending",
         issued_by: user?.id ?? null,
       });
@@ -201,7 +193,7 @@ function ScansPage() {
                       }
                     />
                     <span className="font-mono text-[10px] uppercase text-muted-foreground">
-                      {s.profile}
+                      {s.scan_type}
                     </span>
                     <span className="ml-auto font-mono text-[10px] text-muted-foreground">
                       {relativeTime(s.created_at)}
