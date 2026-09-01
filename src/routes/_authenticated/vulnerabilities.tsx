@@ -186,7 +186,7 @@ function VulnerabilitiesPage() {
                         <td className="py-2 pr-4 text-muted-foreground">
                           {vulnStatusLabel[v.status as VulnStatus]}
                         </td>
-                        <td className={`py-2 font-mono text-xs ${sla.className}`}>{sla.label}</td>
+                        <td className={`py-2 font-mono text-xs ${sla.danger ? "text-critical" : sla.warn ? "text-high" : "text-muted-foreground"}`}>{sla.label}</td>
                       </tr>
                     );
                   })}

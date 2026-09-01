@@ -56,8 +56,10 @@ function IncidentsPage() {
 
   const setPhase = useMutation({
     mutationFn: async ({ id, phase }: { id: string; phase: IncidentPhase }) => {
-      const patch: Record<string, unknown> = { phase };
-      if (phase === "closed") patch.closed_at = new Date().toISOString();
+      const patch = {
+        phase,
+        ...(phase === "closed" ? { closed_at: new Date().toISOString() } : {}),
+      };
       const { error } = await supabase.from("incidents").update(patch).eq("id", id);
       if (error) throw error;
     },

@@ -44,7 +44,10 @@ function AuthPage() {
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Bem-vindo ao Hermes Command Center");
   }
 
@@ -60,7 +63,10 @@ function AuthPage() {
       },
     });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     if (!data.session) {
       setAwaitingConfirm(true);
       toast.success("Confirme seu e-mail para ativar o acesso.");
@@ -71,7 +77,9 @@ function AuthPage() {
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
     });
-    if (result.error) return toast.error("Não foi possível entrar com Google.");
+    if (result.error) {
+      toast.error("Não foi possível entrar com Google.");
+    }
   }
 
   return (

@@ -10,6 +10,7 @@ import {
   formatDateTime,
   relativeTime,
   type CommandStatus,
+  type Severity,
 } from "@/lib/domain";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,7 +91,15 @@ function HermesPage() {
   }, [queryClient]);
 
   const savePolicy = useMutation({
-    mutationFn: async (patch: Record<string, unknown>) => {
+    mutationFn: async (patch: Partial<{
+      mode: string;
+      min_severity_to_act: Severity;
+      auto_approved_actions: string[];
+      scan_schedule: string;
+      maintenance_window: string | null;
+      paused: boolean;
+      notes: string | null;
+    }>) => {
       if (!data?.policy) throw new Error("Política não encontrada.");
       const { error } = await supabase
         .from("hermes_policies")
@@ -206,7 +215,7 @@ function HermesPage() {
                 <Select
                   value={policy.min_severity_to_act}
                   disabled={!isAdmin}
-                  onValueChange={(min_severity_to_act) => savePolicy.mutate({ min_severity_to_act })}
+                  onValueChange={(v) => savePolicy.mutate({ min_severity_to_act: v as Severity })}
                 >
                   <SelectTrigger>
                     <SelectValue />
