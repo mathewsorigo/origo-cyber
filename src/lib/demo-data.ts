@@ -47,6 +47,11 @@ export const DEMO_SCAN_TARGETS = [
 
 type JsonRecord = Record<string, unknown>;
 
+export function isDemoCleanupConfirmation(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return Object.keys(value).length === 1 && value["confirm"] === "REMOVE_DEMO_DATA";
+}
+
 export function isDemoCommand(command: {
   command: string;
   args: unknown;

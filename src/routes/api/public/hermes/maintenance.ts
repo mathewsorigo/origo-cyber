@@ -6,6 +6,7 @@ import {
   DEMO_SCAN_TARGETS,
   DEMO_VULNERABILITY_FINGERPRINTS,
   isDemoAuditEvent,
+  isDemoCleanupConfirmation,
   isDemoCommand,
 } from "@/lib/demo-data";
 
@@ -19,7 +20,7 @@ function response(body: unknown, status = 200) {
 export const Route = createFileRoute("/api/public/hermes/maintenance")({
   server: {
     handlers: {
-      // Read-only verification endpoint. Cleanup is applied atomically by the database migration.
+      // Read-only verification endpoint.
       GET: async ({ request }) => {
         const { authenticateHermes, unauthorized } = await import("@/lib/hermes-auth.server");
         const caller = await authenticateHermes(request);
@@ -35,11 +36,142 @@ export const Route = createFileRoute("/api/public/hermes/maintenance")({
           );
         }
       },
+
+      // Authenticated, explicit and idempotent cleanup of the original demo seed.
+      POST: async ({ request }) => {
+        const { authenticateHermes, unauthorized } = await import("@/lib/hermes-auth.server");
+        const caller = await authenticateHermes(request);
+        if (!caller) return unauthorized();
+
+        let body: unknown;
+        try {
+          body = await request.json();
+        } catch {
+          return response({ error: "invalid json" }, 400);
+        }
+        if (!isDemoCleanupConfirmation(body)) {
+          return response({ error: "explicit cleanup confirmation required" }, 400);
+        }
+
+        try {
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const before = await countDemoRecords(supabaseAdmin);
+          await cleanupDemoRecords(supabaseAdmin);
+          const after = await countDemoRecords(supabaseAdmin);
+          return response({ ok: true, before, after });
+        } catch (error) {
+          return response(
+            { error: error instanceof Error ? error.message : "Maintenance cleanup failed" },
+            500,
+          );
+        }
+      },
     },
   },
 });
 
 type AdminClient = typeof import("@/integrations/supabase/client.server").supabaseAdmin;
+
+type QueryError = { message: string } | null;
+
+function assertNoError(error: QueryError) {
+  if (error) throw new Error(error.message);
+}
+
+async function cleanupDemoRecords(client: AdminClient): Promise<void> {
+  const [assets, vulnerabilities, incidents, actions, scans, commands, audit] = await Promise.all([
+    client
+      .from("assets")
+      .select("id, identifier")
+      .in("identifier", [...DEMO_ASSET_IDENTIFIERS]),
+    client
+      .from("vulnerabilities")
+      .select("id, fingerprint")
+      .in("fingerprint", [...DEMO_VULNERABILITY_FINGERPRINTS]),
+    client
+      .from("incidents")
+      .select("id, reference")
+      .in("reference", [...DEMO_INCIDENT_REFERENCES]),
+    client
+      .from("response_actions")
+      .select("id, vulnerability_id, incident_id, title")
+      .in("title", [...DEMO_ACTION_TITLES]),
+    client
+      .from("scans")
+      .select("id, asset_id, target, started_by")
+      .in("target", [...DEMO_SCAN_TARGETS]),
+    client.from("hermes_commands").select("id, command, args, result"),
+    client
+      .from("audit_log")
+      .select("id, actor_label, action, detail")
+      .in("action", [
+        "finding.ingested",
+        "action.proposed",
+        "action.executed",
+        "policy.updated",
+        "scan.started",
+      ]),
+  ]);
+
+  for (const result of [assets, vulnerabilities, incidents, actions, scans, commands, audit]) {
+    assertNoError(result.error);
+  }
+
+  const assetIds = new Set((assets.data ?? []).map((record) => record.id));
+  const vulnerabilityIds = new Set((vulnerabilities.data ?? []).map((record) => record.id));
+  const incidentIds = new Set((incidents.data ?? []).map((record) => record.id));
+  const actionIds = (actions.data ?? [])
+    .filter(
+      (record) =>
+        (record.vulnerability_id && vulnerabilityIds.has(record.vulnerability_id)) ||
+        (record.incident_id && incidentIds.has(record.incident_id)),
+    )
+    .map((record) => record.id);
+  const scanIds = (scans.data ?? [])
+    .filter(
+      (record) =>
+        record.started_by === null && record.asset_id !== null && assetIds.has(record.asset_id),
+    )
+    .map((record) => record.id);
+  const commandIds = (commands.data ?? []).filter(isDemoCommand).map((record) => record.id);
+  const auditIds = (audit.data ?? []).filter(isDemoAuditEvent).map((record) => record.id);
+
+  if (actionIds.length) {
+    const result = await client.from("response_actions").delete().in("id", actionIds);
+    assertNoError(result.error);
+  }
+  if (scanIds.length) {
+    const result = await client.from("scans").delete().in("id", scanIds);
+    assertNoError(result.error);
+  }
+
+  const vulnerabilitiesDeletion = await client
+    .from("vulnerabilities")
+    .delete()
+    .in("fingerprint", [...DEMO_VULNERABILITY_FINGERPRINTS]);
+  assertNoError(vulnerabilitiesDeletion.error);
+
+  const incidentsDeletion = await client
+    .from("incidents")
+    .delete()
+    .in("reference", [...DEMO_INCIDENT_REFERENCES]);
+  assertNoError(incidentsDeletion.error);
+
+  const assetsDeletion = await client
+    .from("assets")
+    .delete()
+    .in("identifier", [...DEMO_ASSET_IDENTIFIERS]);
+  assertNoError(assetsDeletion.error);
+
+  if (commandIds.length) {
+    const result = await client.from("hermes_commands").delete().in("id", commandIds);
+    assertNoError(result.error);
+  }
+  if (auditIds.length) {
+    const result = await client.from("audit_log").delete().in("id", auditIds);
+    assertNoError(result.error);
+  }
+}
 
 async function countDemoRecords(client: AdminClient): Promise<Record<string, number>> {
   const [assets, vulnerabilities, incidents, actions, scans, commands, audit] = await Promise.all([

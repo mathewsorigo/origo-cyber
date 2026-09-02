@@ -8,6 +8,7 @@ import {
   DEMO_VULNERABILITY_FINGERPRINTS,
   isDemoAuditEvent,
   isDemoCommand,
+  isDemoCleanupConfirmation,
 } from "../src/lib/demo-data.ts";
 
 test("catálogos de dados fictícios mantêm identificadores estáveis e únicos", () => {
@@ -33,6 +34,13 @@ test("reconhece somente os comandos exatos do seed fictício", () => {
   assert.equal(isDemoCommand({ command: "ping", args: {}, result: { latency_ms: 142 } }), true);
   assert.equal(isDemoCommand({ command: "ping", args: {} }), false);
   assert.equal(isDemoCommand({ command: "start_scan", args: { target: "ativo-real" } }), false);
+});
+
+test("confirmação de limpeza exige payload literal e não aceita aproximações", () => {
+  assert.equal(isDemoCleanupConfirmation({ confirm: "REMOVE_DEMO_DATA" }), true);
+  assert.equal(isDemoCleanupConfirmation({ confirm: "remove_demo_data" }), false);
+  assert.equal(isDemoCleanupConfirmation({ confirm: "REMOVE_DEMO_DATA", extra: true }), false);
+  assert.equal(isDemoCleanupConfirmation(null), false);
 });
 
 test("reconhece eventos fictícios pela combinação de ação e detalhe", () => {
