@@ -7,7 +7,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { EmptyState, PageHeader, Panel, StatusPill } from "@/components/common";
 import { formatDateTime, relativeTime, scanStatusLabel, type ScanStatus } from "@/lib/domain";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -50,8 +49,7 @@ function ScansPage() {
   );
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
-  const [target, setTarget] = useState("");
-  const [assetId, setAssetId] = useState<string>("none");
+  const [assetId, setAssetId] = useState<string>("");
   const [profile, setProfile] = useState("quick");
 
   const { data: scans = [], isLoading } = useQuery({
@@ -70,7 +68,10 @@ function ScansPage() {
   const { data: assets = [] } = useQuery({
     queryKey: ["assets-min"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("assets").select("id,name").order("name");
+      const { data, error } = await supabase
+        .from("assets")
+        .select("id,name,identifier")
+        .order("name");
       if (error) throw error;
       return data;
     },
@@ -78,16 +79,14 @@ function ScansPage() {
 
   const launch = useMutation({
     mutationFn: async () => {
-      if (!target.trim()) throw new Error("Informe o alvo do scan.");
+      if (!assetId) throw new Error("Selecione um ativo cadastrado.");
       await runControlAction("scan.create", {
-        target: target.trim(),
-        asset_id: assetId === "none" ? null : assetId,
+        asset_id: assetId,
         scan_type: profile,
       });
     },
     onSuccess: () => {
       toast.success("Scan enfileirado para o Hermes");
-      setTarget("");
       queryClient.invalidateQueries({ queryKey: ["scans"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -112,20 +111,14 @@ function ScansPage() {
         <Panel title="Novo scan">
           {isAdmin ? (
             <div className="space-y-3">
-              <Input
-                placeholder="Alvo (host, domínio, repo, conta)"
-                value={target}
-                onChange={(e) => setTarget(e.target.value)}
-              />
               <Select value={assetId} onValueChange={setAssetId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Ativo vinculado" />
+                  <SelectValue placeholder="Selecione o ativo autorizado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Sem ativo vinculado</SelectItem>
                   {assets.map((a) => (
                     <SelectItem key={a.id} value={a.id}>
-                      {a.name}
+                      {a.name} · {a.identifier}
                     </SelectItem>
                   ))}
                 </SelectContent>

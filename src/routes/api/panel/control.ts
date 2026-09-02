@@ -5,6 +5,7 @@ import {
   RESPONSE_ACTION_TYPES,
   isCompleteResponsePlan,
 } from "@/lib/response-action";
+import { authorizedScanTarget } from "@/lib/scan-request";
 
 const uuid = z.string().uuid();
 const severity = z.enum(["critical", "high", "medium", "low", "info"]);
@@ -91,11 +92,12 @@ const requestSchema = z.discriminatedUnion("action", [
   }),
   z.object({
     action: z.literal("scan.create"),
-    payload: z.object({
-      target: z.string().trim().min(1).max(500),
-      asset_id: uuid.nullable().optional(),
-      scan_type: z.enum(["quick", "full", "web", "cloud", "code"]),
-    }),
+    payload: z
+      .object({
+        asset_id: uuid,
+        scan_type: z.enum(["quick", "full", "web", "cloud", "code"]),
+      })
+      .strict(),
   }),
   z.object({
     action: z.literal("scan.cancel"),
@@ -329,11 +331,27 @@ export const Route = createFileRoute("/api/panel/control")({
 
           if (action === "scan.create") {
             requireAdmin();
+            const { data: asset, error: assetError } = await supabaseAdmin
+              .from("assets")
+              .select("id, identifier")
+              .eq("id", payload.asset_id)
+              .maybeSingle();
+            if (assetError) throw assetError;
+            let target: string;
+            try {
+              target = authorizedScanTarget(asset);
+            } catch (error) {
+              return json(
+                { error: error instanceof Error ? error.message : "Ativo inválido" },
+                400,
+              );
+            }
+
             const { data: scan, error } = await supabaseAdmin
               .from("scans")
               .insert({
-                target: payload.target,
-                asset_id: payload.asset_id ?? null,
+                target,
+                asset_id: payload.asset_id,
                 scan_type: payload.scan_type,
                 status: "queued",
                 started_by: caller.userId,
@@ -341,26 +359,12 @@ export const Route = createFileRoute("/api/panel/control")({
               .select("*")
               .single();
             if (error) throw error;
-            const { data: command, error: commandError } = await supabaseAdmin
-              .from("hermes_commands")
-              .insert({
-                command: "start_scan",
-                args: { scan_id: scan.id, target: payload.target, scan_type: payload.scan_type },
-                status: "pending",
-                issued_by: caller.userId,
-              })
-              .select("id")
-              .single();
-            if (commandError) {
-              await supabaseAdmin.from("scans").delete().eq("id", scan.id);
-              throw commandError;
-            }
             await auditPanel(caller, "panel.scan.queued", "scan", scan.id, {
-              command_id: command.id,
-              target: payload.target,
+              target,
+              asset_id: payload.asset_id,
               scan_type: payload.scan_type,
             });
-            return json({ ok: true, entity: scan, command_id: command.id }, 201);
+            return json({ ok: true, entity: scan }, 201);
           }
 
           if (action === "scan.cancel") {
