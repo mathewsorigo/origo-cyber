@@ -5,6 +5,7 @@ import {
   canReportActionResult,
   canReportCommandResult,
   canReportScanResult,
+  isValidLeaseRecovery,
 } from "../src/lib/workflow.ts";
 
 test("ação só aceita resultado terminal quando está em execução", () => {
@@ -18,6 +19,21 @@ test("comando aceita ack após despacho e resultado terminal após despacho ou a
   assert.equal(canReportCommandResult("acknowledged", "succeeded"), true);
   assert.equal(canReportCommandResult("pending", "succeeded"), false);
   assert.equal(canReportCommandResult("succeeded", "failed"), false);
+});
+
+test("recuperação de lease exige confirmação literal e janela segura", () => {
+  assert.equal(
+    isValidLeaseRecovery({ confirm: "FAIL_STALE_LEASES", older_than_minutes: 30 }),
+    true,
+  );
+  assert.equal(
+    isValidLeaseRecovery({ confirm: "FAIL_STALE_LEASES", older_than_minutes: 5 }),
+    false,
+  );
+  assert.equal(
+    isValidLeaseRecovery({ confirm: "RETRY_STALE_LEASES", older_than_minutes: 30 }),
+    false,
+  );
 });
 
 test("scan só aceita progresso e resultado enquanto está executando", () => {
