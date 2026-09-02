@@ -8,6 +8,7 @@ export type ControlAction =
   | "asset.delete"
   | "scan.create"
   | "scan.cancel"
+  | "response_action.create"
   | "response_action.decide"
   | "policy.update"
   | "command.create"

@@ -1,5 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import {
+  RESPONSE_ACTION_PLATFORMS,
+  RESPONSE_ACTION_TYPES,
+  isCompleteResponsePlan,
+} from "@/lib/response-action";
 
 const uuid = z.string().uuid();
 const severity = z.enum(["critical", "high", "medium", "low", "info"]);
@@ -21,6 +26,16 @@ const safeCommand = z.enum([
   "reload_policy",
   "update_signatures",
 ]);
+const responsePlan = z
+  .object({
+    platform: z.enum(RESPONSE_ACTION_PLATFORMS),
+    target: z.string().trim().min(3).max(500),
+    execution: z.string().trim().min(3).max(4000),
+    rollback: z.string().trim().min(3).max(4000),
+    validation: z.string().trim().min(3).max(4000),
+  })
+  .strict()
+  .refine(isCompleteResponsePlan);
 
 const requestSchema = z.discriminatedUnion("action", [
   z.object({
@@ -85,6 +100,23 @@ const requestSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("scan.cancel"),
     payload: z.object({ id: uuid, note: z.string().min(3).max(1000) }),
+  }),
+  z.object({
+    action: z.literal("response_action.create"),
+    payload: z
+      .object({
+        vulnerability_id: uuid.nullable().optional(),
+        incident_id: uuid.nullable().optional(),
+        asset_id: uuid.nullable().optional(),
+        action_type: z.enum(RESPONSE_ACTION_TYPES),
+        title: z.string().trim().min(3).max(300),
+        rationale: z.string().trim().min(3).max(4000),
+        risk: severity,
+        plan: responsePlan,
+      })
+      .refine((value) => Boolean(value.vulnerability_id || value.incident_id), {
+        message: "A ação deve estar vinculada a uma vulnerabilidade ou incidente",
+      }),
   }),
   z.object({
     action: z.literal("response_action.decide"),
@@ -389,6 +421,76 @@ export const Route = createFileRoute("/api/panel/control")({
               note: payload.note,
             });
             return json({ ok: true, command_id: command.id });
+          }
+
+          if (action === "response_action.create") {
+            requireTriage();
+
+            let linkedAssetId = payload.asset_id ?? null;
+            if (payload.vulnerability_id) {
+              const { data: vulnerability, error } = await supabaseAdmin
+                .from("vulnerabilities")
+                .select("id, asset_id")
+                .eq("id", payload.vulnerability_id)
+                .maybeSingle();
+              if (error) throw error;
+              if (!vulnerability) return json({ error: "Vulnerabilidade não encontrada" }, 404);
+              linkedAssetId ??= vulnerability.asset_id;
+            }
+            if (payload.incident_id) {
+              const { data: incident, error } = await supabaseAdmin
+                .from("incidents")
+                .select("id")
+                .eq("id", payload.incident_id)
+                .maybeSingle();
+              if (error) throw error;
+              if (!incident) return json({ error: "Incidente não encontrado" }, 404);
+            }
+
+            let duplicateQuery = supabaseAdmin
+              .from("response_actions")
+              .select("id")
+              .eq("action_type", payload.action_type)
+              .contains("payload", { target: payload.plan.target })
+              .in("status", ["pending_approval", "approved", "executing"]);
+            if (payload.vulnerability_id) {
+              duplicateQuery = duplicateQuery.eq("vulnerability_id", payload.vulnerability_id);
+            }
+            if (payload.incident_id) {
+              duplicateQuery = duplicateQuery.eq("incident_id", payload.incident_id);
+            }
+            const { data: duplicate, error: duplicateError } = await duplicateQuery
+              .limit(1)
+              .maybeSingle();
+            if (duplicateError) throw duplicateError;
+            if (duplicate) {
+              return json({ error: "Já existe uma ação ativa equivalente para este alvo" }, 409);
+            }
+
+            const { data, error } = await supabaseAdmin
+              .from("response_actions")
+              .insert({
+                vulnerability_id: payload.vulnerability_id ?? null,
+                incident_id: payload.incident_id ?? null,
+                asset_id: linkedAssetId,
+                action_type: payload.action_type,
+                title: payload.title,
+                rationale: payload.rationale,
+                risk: payload.risk,
+                payload: payload.plan,
+                status: "pending_approval",
+                requested_by: "panel",
+              })
+              .select("*")
+              .single();
+            if (error) throw error;
+            await auditPanel(caller, "panel.response_action.proposed", "response_action", data.id, {
+              action_type: data.action_type,
+              platform: payload.plan.platform,
+              target: payload.plan.target,
+              risk: data.risk,
+            });
+            return json({ ok: true, entity: data }, 201);
           }
 
           if (action === "response_action.decide") {

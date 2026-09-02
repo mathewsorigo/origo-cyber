@@ -28,7 +28,16 @@ export const Route = createFileRoute("/api/public/hermes/maintenance")({
 
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          return response({ ok: true, demo_records: await countDemoRecords(supabaseAdmin) });
+          const [{ data: policy, error: policyError }, demoRecords] = await Promise.all([
+            supabaseAdmin
+              .from("hermes_policies")
+              .select("mode, paused, auto_approved_actions")
+              .eq("singleton", true)
+              .maybeSingle(),
+            countDemoRecords(supabaseAdmin),
+          ]);
+          if (policyError) throw new Error(policyError.message);
+          return response({ ok: true, demo_records: demoRecords, policy });
         } catch (error) {
           return response(
             { error: error instanceof Error ? error.message : "Maintenance check failed" },
@@ -171,6 +180,17 @@ async function cleanupDemoRecords(client: AdminClient): Promise<void> {
     const result = await client.from("audit_log").delete().in("id", auditIds);
     assertNoError(result.error);
   }
+
+  const policyUpdate = await client
+    .from("hermes_policies")
+    .update({
+      mode: "supervised",
+      auto_approved_actions: [],
+      notes:
+        "Controle supervisionado: execução crítica exige aprovação humana, rollback e validação.",
+    })
+    .eq("singleton", true);
+  assertNoError(policyUpdate.error);
 }
 
 async function countDemoRecords(client: AdminClient): Promise<Record<string, number>> {

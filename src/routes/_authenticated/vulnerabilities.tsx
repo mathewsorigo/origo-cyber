@@ -25,6 +25,7 @@ import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { runControlAction } from "@/lib/panel-control";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ResponseActionForm } from "@/components/ResponseActionForm";
 
 const statuses: VulnStatus[] = [
   "new",
@@ -260,6 +261,12 @@ function VulnerabilitiesPage() {
                   <p className="mt-1 text-sm">{current.remediation}</p>
                 </div>
               )}
+
+              <ResponseActionForm
+                vulnerabilityId={current.id}
+                assetId={current.asset_id}
+                defaultTarget={current.assets?.name ?? current.fingerprint}
+              />
 
               <div className="border-t border-border pt-3">
                 <p className="mb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">

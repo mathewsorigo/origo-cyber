@@ -28,6 +28,7 @@ import { Route as ApiPublicHermesFindingsRouteImport } from './routes/api/public
 import { Route as ApiPublicHermesHeartbeatRouteImport } from './routes/api/public/hermes/heartbeat'
 import { Route as ApiPublicHermesIncidentsRouteImport } from './routes/api/public/hermes/incidents'
 import { Route as ApiPublicHermesMaintenanceRouteImport } from './routes/api/public/hermes/maintenance'
+import { Route as ApiPublicHermesQueueRouteImport } from './routes/api/public/hermes/queue'
 import { Route as ApiPublicHermesScansRouteImport } from './routes/api/public/hermes/scans'
 
 const IndexRoute = IndexRouteImport.update({
@@ -128,6 +129,11 @@ const ApiPublicHermesMaintenanceRoute =
     path: '/api/public/hermes/maintenance',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHermesQueueRoute = ApiPublicHermesQueueRouteImport.update({
+  id: '/api/public/hermes/queue',
+  path: '/api/public/hermes/queue',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHermesScansRoute = ApiPublicHermesScansRouteImport.update({
   id: '/api/public/hermes/scans',
   path: '/api/public/hermes/scans',
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hermes/heartbeat': typeof ApiPublicHermesHeartbeatRoute
   '/api/public/hermes/incidents': typeof ApiPublicHermesIncidentsRoute
   '/api/public/hermes/maintenance': typeof ApiPublicHermesMaintenanceRoute
+  '/api/public/hermes/queue': typeof ApiPublicHermesQueueRoute
   '/api/public/hermes/scans': typeof ApiPublicHermesScansRoute
 }
 export interface FileRoutesByTo {
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/api/public/hermes/heartbeat': typeof ApiPublicHermesHeartbeatRoute
   '/api/public/hermes/incidents': typeof ApiPublicHermesIncidentsRoute
   '/api/public/hermes/maintenance': typeof ApiPublicHermesMaintenanceRoute
+  '/api/public/hermes/queue': typeof ApiPublicHermesQueueRoute
   '/api/public/hermes/scans': typeof ApiPublicHermesScansRoute
 }
 export interface FileRoutesById {
@@ -197,6 +205,7 @@ export interface FileRoutesById {
   '/api/public/hermes/heartbeat': typeof ApiPublicHermesHeartbeatRoute
   '/api/public/hermes/incidents': typeof ApiPublicHermesIncidentsRoute
   '/api/public/hermes/maintenance': typeof ApiPublicHermesMaintenanceRoute
+  '/api/public/hermes/queue': typeof ApiPublicHermesQueueRoute
   '/api/public/hermes/scans': typeof ApiPublicHermesScansRoute
 }
 export interface FileRouteTypes {
@@ -220,6 +229,7 @@ export interface FileRouteTypes {
     | '/api/public/hermes/heartbeat'
     | '/api/public/hermes/incidents'
     | '/api/public/hermes/maintenance'
+    | '/api/public/hermes/queue'
     | '/api/public/hermes/scans'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -241,6 +251,7 @@ export interface FileRouteTypes {
     | '/api/public/hermes/heartbeat'
     | '/api/public/hermes/incidents'
     | '/api/public/hermes/maintenance'
+    | '/api/public/hermes/queue'
     | '/api/public/hermes/scans'
   id:
     | '__root__'
@@ -263,6 +274,7 @@ export interface FileRouteTypes {
     | '/api/public/hermes/heartbeat'
     | '/api/public/hermes/incidents'
     | '/api/public/hermes/maintenance'
+    | '/api/public/hermes/queue'
     | '/api/public/hermes/scans'
   fileRoutesById: FileRoutesById
 }
@@ -277,6 +289,7 @@ export interface RootRouteChildren {
   ApiPublicHermesHeartbeatRoute: typeof ApiPublicHermesHeartbeatRoute
   ApiPublicHermesIncidentsRoute: typeof ApiPublicHermesIncidentsRoute
   ApiPublicHermesMaintenanceRoute: typeof ApiPublicHermesMaintenanceRoute
+  ApiPublicHermesQueueRoute: typeof ApiPublicHermesQueueRoute
   ApiPublicHermesScansRoute: typeof ApiPublicHermesScansRoute
 }
 
@@ -415,6 +428,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHermesMaintenanceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hermes/queue': {
+      id: '/api/public/hermes/queue'
+      path: '/api/public/hermes/queue'
+      fullPath: '/api/public/hermes/queue'
+      preLoaderRoute: typeof ApiPublicHermesQueueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hermes/scans': {
       id: '/api/public/hermes/scans'
       path: '/api/public/hermes/scans'
@@ -463,6 +483,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHermesHeartbeatRoute: ApiPublicHermesHeartbeatRoute,
   ApiPublicHermesIncidentsRoute: ApiPublicHermesIncidentsRoute,
   ApiPublicHermesMaintenanceRoute: ApiPublicHermesMaintenanceRoute,
+  ApiPublicHermesQueueRoute: ApiPublicHermesQueueRoute,
   ApiPublicHermesScansRoute: ApiPublicHermesScansRoute,
 }
 export const routeTree = rootRouteImport

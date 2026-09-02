@@ -23,6 +23,7 @@ import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { runControlAction } from "@/lib/panel-control";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { ResponseActionForm } from "@/components/ResponseActionForm";
 
 const phases: IncidentPhase[] = ["open", "contained", "eradicated", "recovered", "closed"];
 
@@ -159,6 +160,8 @@ function IncidentsPage() {
                   <dd>{current.source ?? "hermes"}</dd>
                 </div>
               </dl>
+
+              <ResponseActionForm incidentId={current.id} defaultTarget={current.reference} />
 
               <div className="border-t border-border pt-3">
                 <p className="mb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
